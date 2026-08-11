@@ -1,0 +1,871 @@
+/* ==========================================================================
+   Nestometry
+   Full-bleed light stage behind floating white panels.
+   Neutral slate and amber accents avoid institutional brand colors.
+   ========================================================================== */
+
+:root {
+  --navy: #334155;
+  --navy-soft: #475569;
+  --gold: #f59e0b;
+  --ink: #1b2733;
+  --ink-soft: #52657a;
+  --line: #e4e9ef;
+  --surface: #ffffff;
+  --surface-muted: #f6f8fb;
+  --stage-bg: #eef1f5;
+  --warn-bg: #fff4e5;
+  --warn-ink: #7c3a12;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 14px 44px rgba(0, 0, 0, 0.12);
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--stage-bg);
+  color: var(--ink);
+}
+
+/* --- Stage shell: canvas is the full viewport; UI floats over it. --- */
+.app-stage {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--stage-bg);
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  background: var(--stage-bg);
+}
+
+.stage-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--stage-bg);
+}
+
+.stage-scene canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* --- Top bar chrome (full-width white bar over the stage) --- */
+.topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  z-index: 40;
+}
+
+.topbar-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 4px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-pill {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.topbar-pill:hover {
+  border-color: var(--navy);
+}
+
+.topbar-pill.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--navy);
+}
+
+.topbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  width: 38px;
+  height: 38px;
+  color: var(--navy);
+}
+
+.topbar-furniture {
+  position: relative;
+}
+
+/* Stacked 3D/2D toggle at the far corner. */
+.topbar-segmented {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-muted);
+  border-radius: 12px;
+}
+
+.topbar-segmented button {
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 3px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  cursor: pointer;
+  line-height: 1.3;
+}
+
+.topbar-segmented button.active {
+  background: var(--navy);
+  color: #fff;
+}
+
+/* With the Walk segment present (fine-pointer devices only) three stacked
+   segments would overflow the 60px top bar, so the group flows as a row. */
+.topbar-segmented.has-walk {
+  flex-direction: row;
+}
+
+/* --- Round zoom buttons on the stage's right edge --- */
+.zoom-controls {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 25;
+}
+
+.zoom-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-btn:hover {
+  border-color: var(--navy);
+}
+
+/* --- Anchored 3D dimension badges (drei <Html>) --- */
+.dim3d-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  user-select: none;
+}
+
+.dim3d-badge--shell {
+  background: var(--navy-soft);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* Always-visible honesty chip, bottom-left over the stage. */
+.stage-accuracy-chip {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  max-width: min(420px, 70vw);
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+
+/* Honesty note shown while furniture is displaced in Arrange mode. Sits just
+   above the accuracy chip; the chip itself is untouched. */
+.stage-arrange-note {
+  position: absolute;
+  left: 24px;
+  bottom: 96px;
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--navy);
+  background: rgba(255, 244, 214, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+
+/* Dismissable walk-mode hint pill, top-centre under the top bar. */
+.walk-hint {
+  position: absolute;
+  top: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 10px 12px 10px 16px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  z-index: 30;
+}
+
+.walk-hint-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.walk-hint-keys {
+  font-weight: 700;
+}
+
+.walk-hint-sub {
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.walk-hint-close {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.walk-hint-close:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+/* --- Floating white cards --- */
+.float-card {
+  position: absolute;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+}
+
+.selector-card {
+  top: 76px;
+  left: 20px;
+  width: 300px;
+  max-width: calc(100vw - 40px);
+  padding: 20px;
+  z-index: 20;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  color: var(--navy);
+  font-weight: 800;
+  margin: 0 0 14px;
+}
+
+.field-label {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+}
+
+select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--ink);
+  font-size: 15px;
+  font-family: inherit;
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+
+select:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 1px;
+}
+
+.room-info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.independence-note {
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+/* --- Right info panel (accuracy + dimensions), collapsible --- */
+.info-panel {
+  top: 76px;
+  right: 20px;
+  width: 340px;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100dvh - 96px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.info-panel-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 18px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.info-panel-caret {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.info-panel-body {
+  overflow-y: auto;
+  padding: 0 18px 18px;
+}
+
+.info-panel.is-collapsed {
+  width: 260px;
+}
+
+/* --- Furniture popover (drops down from the top-bar pill) --- */
+.furniture-popover {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 280px;
+  max-width: 84vw;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.furniture-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.furniture-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  user-select: none;
+}
+
+.furniture-chip.is-on {
+  background: rgba(0, 50, 98, 0.08);
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+.furniture-chip input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--navy);
+  cursor: pointer;
+}
+
+.furniture-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* --- Decor master switch --- */
+/* Pinned above the furniture chips, in its own row, styled as a switch so it
+   reads as a master control rather than one of the furniture chips. */
+.furniture-toggle-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.decor-master-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+  user-select: none;
+}
+
+.decor-master-chip.is-on {
+  background: rgba(0, 50, 98, 0.08);
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+/* Native checkbox is the accessible control; the track/knob are the visuals. */
+.decor-master-chip input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.decor-master-track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 18px;
+  border-radius: 999px;
+  background: #c7d0da;
+  transition: background 0.15s ease;
+}
+
+.decor-master-chip.is-on .decor-master-track {
+  background: var(--navy);
+}
+
+.decor-master-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface);
+  transition: transform 0.15s ease;
+}
+
+.decor-master-chip.is-on .decor-master-knob {
+  transform: translateX(16px);
+  background: var(--gold);
+}
+
+.decor-master-chip input:focus-visible + .decor-master-track {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+.decor-master-label {
+  flex: 1 1 auto;
+}
+
+/* --- Accuracy panel --- */
+.accuracy-panel {
+  padding: 0 0 4px;
+}
+
+.accuracy-panel h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.accuracy-panel h3 {
+  margin: 16px 0 6px;
+  font-size: 14px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.warning {
+  color: var(--warn-ink);
+  background: var(--warn-bg);
+  border: 1px solid #f4d3ad;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 12px 0 0;
+}
+
+a {
+  color: var(--navy);
+}
+
+/* --- Source & notes lists --- */
+.source-list,
+.notes-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.source-list li,
+.notes-list li {
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.source-meta {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+/* --- Dimension panel --- */
+.dimension-panel {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.dimension-panel h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.dimension-panel h3 {
+  margin: 16px 0 6px;
+  font-size: 14px;
+}
+
+.dimension-disclaimer {
+  font-size: 12px;
+  color: var(--warn-ink);
+  background: var(--warn-bg);
+  border: 1px solid #f4d3ad;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin: 0 0 8px;
+  line-height: 1.45;
+}
+
+.dim-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dim-table th[scope='col'] {
+  text-align: left;
+  color: var(--ink-soft);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.dim-table th[scope='row'] {
+  text-align: left;
+  font-weight: 600;
+  padding: 6px;
+  vertical-align: top;
+}
+
+.dim-table td {
+  padding: 6px;
+  vertical-align: top;
+}
+
+.dim-count {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.dim-cell {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dim-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.dim-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.dim-badge--verified {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.dim-badge--estimated {
+  background: #fef08a;
+  color: #854d0e;
+}
+
+.dim-badge--unknown {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* --- 2D plan sketch fills (unchanged palette semantics) --- */
+.plan-room { fill: #f8fafc; stroke: var(--navy); stroke-width: 3; }
+.plan-window { fill: #93c5fd; }
+.plan-door { fill: #92400e; }
+.plan-bed { fill: #c4b5fd; stroke: #5b21b6; }
+.plan-desk { fill: #fed7aa; stroke: #9a3412; }
+.plan-chair { fill: #fde68a; stroke: #b45309; }
+.plan-dresser { fill: #bbf7d0; stroke: #166534; }
+.plan-closet { fill: #e5e7eb; stroke: #374151; }
+.plan-micro { fill: #bae6fd; stroke: #075985; }
+
+.plan-label {
+  fill: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* --- Schematic section (schema-driven SVG) inside the info panel --- */
+.schematic {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.schematic h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.schematic svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.schematic-caption {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--warn-ink);
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   Mobile (<900px): stacked sheets instead of floating overlays.
+   Top bar on top, stage below (~55vh), selector + info panel stacked below.
+   ========================================================================== */
+@media (max-width: 900px) {
+  .app-stage {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top bar becomes a normal sticky sheet at the top of the flow. */
+  .topbar {
+    position: sticky;
+    order: 1;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .topbar-title {
+    flex: 1 1 100%;
+  }
+
+  .stage {
+    position: relative;
+    order: 2;
+    height: 55vh;
+    flex: 0 0 auto;
+  }
+
+  .float-card {
+    position: relative;
+    inset: auto;
+    box-shadow: none;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .selector-card {
+    order: 3;
+    top: auto;
+    left: auto;
+    width: 100%;
+    border-top: 0;
+  }
+
+  .info-panel {
+    order: 4;
+    top: auto;
+    right: auto;
+    width: 100%;
+    max-height: none;
+  }
+
+  .info-panel.is-collapsed {
+    width: 100%;
+  }
+
+  .info-panel-body {
+    overflow-y: visible;
+  }
+
+  /* Zoom buttons stay on the stage sheet's right edge. */
+  .zoom-controls {
+    right: 12px;
+  }
+
+  .stage-accuracy-chip {
+    left: 12px;
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+  }
+
+  .stage-arrange-note {
+    left: 12px;
+    bottom: 92px;
+    max-width: calc(100% - 24px);
+  }
+
+  /* Narrow desktop windows: the top bar is a sticky sheet above the stage
+     here, so the walk hint hugs the stage's own top edge instead. */
+  .walk-hint {
+    top: 12px;
+  }
+}

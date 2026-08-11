@@ -1,0 +1,594 @@
+{
+  "schema_version": "0.2.0",
+  "school": "UC Berkeley",
+  "hall": "Unit 3",
+  "building": null,
+  "room_type": "standard_double",
+  "display_name": "Unit 3 Standard Double — Representative",
+  "accuracy_tier": "official_representative",
+  "units": "meters",
+  "representative_model": true,
+  "variation_warning": "UC Berkeley Housing: \"Please note that models depict one example of each room type. Rooms vary in size, layout, and furniture configuration.\" Exact dimensions are unverified until drawings or authorized measurements are obtained.",
+  "sources": [
+    {
+      "id": "berkeley_housing_unit3",
+      "title": "UC Berkeley Housing — Unit 3",
+      "url": "https://housing.berkeley.edu/explore-housing-options/residence-halls/unit-3/",
+      "source_type": "official_housing_page",
+      "used_for": [
+        "layout",
+        "furniture",
+        "warning",
+        "visual_reference"
+      ],
+      "confidence": "high",
+      "notes": "Verified live 2026-08-10. The current page publishes the canonical Unit 3 double text and 3D views: centered inward-swinging door opposite a centered window, a closet/mirror/light for each student beside the entry, one bookshelf and Twin XL on each side wall, and two study desks aligned in the center for access from opposite student sides. It states no numeric dimensions and warns that rooms vary."
+    },
+    {
+      "id": "berkeley_housing_unit3_double_published_3d",
+      "title": "UC Berkeley Housing — Unit 3 double published 3D floor plan",
+      "url": "https://housing.berkeley.edu/wp-content/uploads/double_top-250px.jpg",
+      "source_type": "official_housing_page",
+      "used_for": [
+        "layout",
+        "furniture",
+        "visual_reference"
+      ],
+      "confidence": "high",
+      "notes": "Official floor-plan image linked from the live Unit 3 page, verified 2026-08-10. The companion entrance view is https://housing.berkeley.edu/wp-content/uploads/double_side_01-250px.jpg. Together they define this record's canonical published-3D variant; they do not provide numeric measurements."
+    },
+    {
+      "id": "berkeley_housing_unit3_double_tour_2020",
+      "title": "UCBStudentAffairs — UC Berkeley Housing Mini Tour: Unit 3, Double Room",
+      "url": "https://www.youtube.com/watch?v=aS5EwS9VjH4",
+      "source_type": "official_video",
+      "used_for": [
+        "layout",
+        "furniture",
+        "visual_reference"
+      ],
+      "confidence": "high",
+      "notes": "Official Unit 3 tour published 2020-04-23 and still linked from Berkeley Housing's tours page on 2026-08-10. It shows a valid alternate example with the two desks side-by-side at the window. That tour layout is documented as a variation and is not blended into the canonical published-3D floor plan."
+    },
+    {
+      "id": "berkeley_housing_highrise_double_analog",
+      "title": "UCBStudentAffairs — Sample UC Berkeley High-Rise Double Room",
+      "url": "https://www.youtube.com/watch?v=O_PIZTMsdYA",
+      "source_type": "official_video",
+      "used_for": [
+        "material",
+        "furniture",
+        "visual_reference"
+      ],
+      "confidence": "medium",
+      "notes": "Official unoccupied UC Berkeley high-rise double used only as a physical-furniture and material analog for the published Unit 3 double render. It shows light natural-wood beds, desks, drawer units, and chairs; dark carpet; white built-in storage; and the closet-area mirror/light arrangement. It is not Unit-3-specific and does not establish this record's layout or dimensions."
+    },
+    {
+      "id": "berkeley_facilities_drawing_request",
+      "title": "UC Berkeley Facilities Drawing Requests",
+      "url": "https://facilities.berkeley.edu/requesting-campus-building-drawings",
+      "source_type": "facilities_drawing",
+      "used_for": [
+        "dimension"
+      ],
+      "confidence": "high",
+      "notes": "Process source only. No drawing dimensions have been obtained yet."
+    },
+    {
+      "id": "unit3_interior_model_pack_2026_07",
+      "title": "Unit 3 interior model pack (curated official 3D views, official photos, dimension estimates)",
+      "source_type": "other",
+      "used_for": [
+        "dimension",
+        "visual_reference"
+      ],
+      "confidence": "medium",
+      "notes": "Private look-only analysis pack assembled 2026-07-02 from official views, official videos/photos, and Twin XL scale. It supplies modeling estimates only, not a public source or an official measurement. The canonical layout is cited directly to Berkeley's published page and render assets instead."
+    },
+    {
+      "id": "unit3_double_window_visual_analysis_2026_08",
+      "title": "Unit 3 double two-bay window visualization analysis",
+      "source_type": "other",
+      "used_for": [
+        "dimension",
+        "visual_reference"
+      ],
+      "confidence": "low",
+      "notes": "Internal 2026-08-10 proportional interpretation of Berkeley's published double render plus the official high-rise analog. The 2.4 m width models the full two-bay assembly as two approximately 1.2 m bays; the 1.6 m height is a visual proportion estimate. Neither number is published or measured by Berkeley, and the older pack's single-opening recommendation does not establish this assembly size."
+    }
+  ],
+  "room_shell": {
+    "width": {
+      "value_m": null,
+      "status": "unknown",
+      "estimated": false,
+      "source_id": null,
+      "confidence": "unknown",
+      "notes": "Unknown until measured."
+    },
+    "depth": {
+      "value_m": null,
+      "status": "unknown",
+      "estimated": false,
+      "source_id": null,
+      "confidence": "unknown",
+      "notes": "Unknown until measured."
+    },
+    "height": {
+      "value_m": null,
+      "status": "unknown",
+      "estimated": false,
+      "source_id": null,
+      "confidence": "unknown",
+      "notes": "Unknown until measured."
+    }
+  },
+  "visualization_shell": {
+    "width": {
+      "value_m": 4.115,
+      "status": "estimated",
+      "estimated": true,
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "medium",
+      "notes": "Visualization-only 13 ft 6 in room-width estimate from the model pack's official-view and Twin XL scale analysis; not a verified Berkeley measurement."
+    },
+    "depth": {
+      "value_m": 3.505,
+      "status": "estimated",
+      "estimated": true,
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "medium",
+      "notes": "Visualization-only 11 ft 6 in entry-to-window estimate from the model pack's official-view and Twin XL scale analysis; not a verified Berkeley measurement."
+    },
+    "height": {
+      "value_m": 2.44,
+      "status": "estimated",
+      "estimated": true,
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "medium",
+      "notes": "Visualization-only 8 ft room-height estimate from the Unit 3 interior model pack; not a verified Berkeley measurement."
+    }
+  },
+  "layout_constraints": [
+    {
+      "id": "beds-heads-at-window",
+      "description": "The canonical published 3D example places one Twin XL along each side wall with the bed heads at the window wall.",
+      "source_id": "berkeley_housing_unit3_double_published_3d",
+      "confidence": "high",
+      "relation_type": "adjacent_to",
+      "subject": "twin_xl_bed_group",
+      "object": "window_1"
+    },
+    {
+      "id": "door-window-centered-closets-flank",
+      "description": "The entry door is centered, swings inward, and faces a centered window; one student's closet, mirror, and light occupy each side of the entry.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "high",
+      "relation_type": "adjacent_to",
+      "subject": "closet_group",
+      "object": "door_1"
+    },
+    {
+      "id": "center-tandem-desks-face-sides",
+      "description": "In the canonical published 3D floor plan, two desks form a tandem end-to-end run on the room centerline. The window-side desk is accessed from the left bed aisle and the entry-side desk from the right bed aisle.",
+      "source_id": "berkeley_housing_unit3_double_published_3d",
+      "confidence": "high",
+      "relation_type": "centered_on",
+      "subject": "desk_group",
+      "object": "room_shell_1"
+    },
+    {
+      "id": "bookshelf-on-each-side-wall",
+      "description": "The official page states that each side wall has one bookshelf and one extra-long twin bed; exact bookshelf dimensions and the precise position along each wall are not published.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "high",
+      "relation_type": "adjacent_to",
+      "subject": "bookshelf_group",
+      "object": "twin_xl_bed_group"
+    }
+  ],
+  "objects": [
+    {
+      "id": "room_shell_1",
+      "type": "room_shell",
+      "label": "Room shell for standard double",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": null,
+          "status": "unknown",
+          "estimated": false,
+          "source_id": null,
+          "confidence": "unknown",
+          "notes": "Unknown until measured."
+        },
+        "y": {
+          "value_m": null,
+          "status": "unknown",
+          "estimated": false,
+          "source_id": null,
+          "confidence": "unknown",
+          "notes": "Unknown until measured."
+        },
+        "z": {
+          "value_m": null,
+          "status": "unknown",
+          "estimated": false,
+          "source_id": null,
+          "confidence": "unknown",
+          "notes": "Unknown until measured."
+        }
+      },
+      "position_hint": "Generated from visualization_shell estimates until verified room_shell dimensions are available.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "low",
+      "dimension_status": "unknown",
+      "notes": "Exact dimensions are missing. Generated geometry uses separately labeled visualization_shell estimates."
+    },
+    {
+      "id": "door_1",
+      "type": "door",
+      "label": "Entry door",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.914,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.05,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 2.032,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Centered on the entry wall and swinging inward in the canonical published example; exact offsets and swing clearance are unmeasured.",
+      "source_id": "berkeley_housing_unit3_double_published_3d",
+      "confidence": "high",
+      "dimension_status": "estimated",
+      "notes": "Centered placement and inward swing are official; the 0.914 × 2.032 m leaf is a modeling estimate and must be verified with a drawing or measurement."
+    },
+    {
+      "id": "window_1",
+      "type": "window",
+      "label": "Exterior window",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": 2.4,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_double_window_visual_analysis_2026_08",
+          "confidence": "low",
+          "notes": "Visualization-only estimate for the full two-bay assembly (approximately two 1.2 m bays) from the canonical render and official high-rise analog; not a published or verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.05,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 1.6,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_double_window_visual_analysis_2026_08",
+          "confidence": "low",
+          "notes": "Visualization-only proportional estimate from the canonical render and official high-rise analog; not a published or verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Centered on the wall opposite the entry in the canonical published example; exact size, sill height, and offsets are unmeasured.",
+      "source_id": "berkeley_housing_unit3_double_published_3d",
+      "confidence": "high",
+      "dimension_status": "estimated",
+      "notes": "Centered placement is official. The 2.4 × 1.6 m two-bay assembly and approximately 0.55 m sill are low-confidence visualization estimates, not Berkeley measurements."
+    },
+    {
+      "id": "desk_group",
+      "type": "desk",
+      "label": "Student desks",
+      "count": 2,
+      "dimensions_m": {
+        "x": {
+          "value_m": 1.067,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.61,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 0.762,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Canonical published-3D variant: tandem end-to-end on the centerline, with the window-side desk accessed from the left aisle and the entry-side desk from the right aisle.",
+      "source_id": "berkeley_housing_unit3_double_published_3d",
+      "confidence": "high",
+      "dimension_status": "estimated",
+      "notes": "Placement comes from Berkeley's published double render. Dimensions are model-pack estimates; light natural-wood construction is supported by the direct render and official high-rise analog."
+    },
+    {
+      "id": "chair_group",
+      "type": "chair",
+      "label": "Desk chairs",
+      "count": 2,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.45,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.45,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 0.85,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "One on each student's access side of the canonical tandem desk run.",
+      "source_id": "berkeley_housing_unit3_double_published_3d",
+      "confidence": "medium",
+      "dimension_status": "estimated",
+      "notes": "The canonical render establishes one chair per desk and opposite-side access. The official high-rise analog supports a light natural-wood chair profile; dimensions remain placeholder estimates."
+    },
+    {
+      "id": "dresser_group",
+      "type": "dresser",
+      "label": "Dressers/storage",
+      "count": 2,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.762,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.61,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 0.762,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Placement deliberately uncommitted: the official page confirms a dresser per resident but does not textually locate either dresser in the published double example.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "medium",
+      "dimension_status": "estimated",
+      "notes": "Existence/count are official. Render shapes are not clear enough to assign a canonical footprint, so the 2D plan omits dresser placement; dimensions are model-pack estimates."
+    },
+    {
+      "id": "closet_group",
+      "type": "closet",
+      "label": "Closets",
+      "count": 2,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.914,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.61,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 1.981,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "One built-in closet on each side of the centered entry door in the canonical published example.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "high",
+      "dimension_status": "estimated",
+      "notes": "Official text associates one closet, mirror, and light with each student beside the entry. Closet dimensions remain model-pack estimates."
+    },
+    {
+      "id": "microchill_1",
+      "type": "microchill",
+      "label": "Microchill",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.508,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.508,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 1.118,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Placement deliberately uncommitted: the official furnishing list confirms the shared Microchill but the canonical double text does not locate it.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "medium",
+      "dimension_status": "estimated",
+      "notes": "Existence is confirmed on the official Unit 3 page as of 2026-08-10. Placement is omitted from the canonical 2D plan; dimensions remain model-pack estimates."
+    },
+    {
+      "id": "twin_xl_bed_group",
+      "type": "twin_xl_bed",
+      "label": "Twin XL beds",
+      "count": 2,
+      "dimensions_m": {
+        "x": {
+          "value_m": 2.083,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 1.016,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 0.75,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "One low, non-lofted Twin XL along each side wall, with both heads at the window wall in the canonical published example.",
+      "source_id": "berkeley_housing_unit3_double_published_3d",
+      "confidence": "high",
+      "dimension_status": "estimated",
+      "notes": "Count, side-wall placement, and non-lofted canonical configuration are official; footprint dimensions remain model-pack estimates."
+    },
+    {
+      "id": "mirror_group",
+      "type": "other",
+      "label": "Closet mirrors",
+      "count": 2,
+      "position_hint": "One mirror in each student's closet area beside the entry; exact mounting surface and size are unmeasured.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "high",
+      "dimension_status": "unknown",
+      "notes": "The current official double description explicitly pairs a closet, mirror, and light with each student beside the door."
+    },
+    {
+      "id": "closet_light_group",
+      "type": "other",
+      "label": "Closet-area lights",
+      "count": 2,
+      "position_hint": "One light in each student's closet area beside the entry; exact fixture and mounting are unmeasured.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "high",
+      "dimension_status": "unknown",
+      "notes": "The current official double description explicitly pairs a closet, mirror, and light with each student beside the door."
+    },
+    {
+      "id": "bookshelf_group",
+      "type": "other",
+      "label": "Side-wall bookshelves",
+      "count": 2,
+      "position_hint": "One bookshelf on each side wall with that student's Twin XL; exact position along the wall and dimensions are unmeasured.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "high",
+      "dimension_status": "unknown",
+      "notes": "The official double description confirms one bookshelf on each side wall. The canonical 2D plan omits a footprint until its size and precise position are supportable."
+    }
+  ],
+  "needs_measurement": [
+    {
+      "id": "u3-double-room-width-depth-height",
+      "item": "Room shell width, depth, height",
+      "why_needed": "Required for accurate scale and fit planning.",
+      "best_source": "facilities_drawing",
+      "priority": "high"
+    },
+    {
+      "id": "u3-double-opening-positions",
+      "item": "Door and window size/position",
+      "why_needed": "Required for accurate room shell and furniture placement.",
+      "best_source": "facilities_drawing",
+      "priority": "high"
+    },
+    {
+      "id": "u3-double-furniture-specs",
+      "item": "Bed, desk, chair, dresser, closet, Microchill, bookshelf, mirror, and light dimensions/mounting",
+      "why_needed": "Required for fit planning and for completing currently omitted canonical-plan details.",
+      "best_source": "housing_spec",
+      "priority": "high"
+    }
+  ],
+  "public_notes": [
+    "Representative model only; exact room dimensions are not verified. The 4.115 × 3.505 × 2.44 m visualization shell is an estimate, while room_shell remains unknown.",
+    "Canonical layout follows Berkeley's published Unit 3 double 3D example: centered door and window, entry-side closets/mirrors/lights, one bed and bookshelf per side wall, and tandem center desks accessed from opposite sides.",
+    "The official 2020 Unit 3 double tour shows a different valid window-desk arrangement; it is documented as a variation and not blended into the canonical plan.",
+    "Furniture existence was rechecked against the official UC Berkeley Housing Unit 3 page on 2026-08-10. Dresser and Microchill placement remain uncommitted because the canonical description does not locate them clearly.",
+    "Bathrooms are community bathrooms located on each floor, not inside the room.",
+    "Rooms vary in size, layout, and furniture configuration (official UC Berkeley Housing warning)."
+  ],
+  "internal_notes": [
+    "Unit 3 double evidence was re-researched and reconciled on 2026-08-10; the published 3D example is the canonical variant.",
+    "visualization_shell dimensions are sourced modeling estimates, not verified Berkeley measurements.",
+    "The official gallery photo labeled 'A Triple Room in Units 1-3' is excluded from double-specific layout, furniture-profile, and material claims."
+  ]
+}

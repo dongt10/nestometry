@@ -1,0 +1,49 @@
+name: Accuracy correction
+description: Propose a source-backed correction to a room model or record.
+title: "Accuracy: "
+labels: [accuracy]
+body:
+  - type: dropdown
+    id: room
+    attributes:
+      label: Room example
+      options:
+        - Unit 3 standard double
+        - Unit 3 standard triple
+        - General or new room
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Public source URL
+      placeholder: https://
+    validations:
+      required: true
+  - type: input
+    id: access_date
+    attributes:
+      label: Source access date
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+  - type: textarea
+    id: observation
+    attributes:
+      label: Observed fact
+      description: State only what the source directly supports. Identify variants and uncertainty.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_change
+    attributes:
+      label: Proposed correction
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Source safety
+      options:
+        - label: The submission contains no private student information, restricted drawings, copied tour assets, or security-sensitive details.
+          required: true
