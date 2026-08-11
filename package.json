@@ -1,0 +1,30 @@
+{
+  "name": "nestometry",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "corepack pnpm --filter @nestometry/web dev",
+    "build": "corepack pnpm --filter @nestometry/web build",
+    "lint": "corepack pnpm --filter @nestometry/web lint",
+    "typecheck": "corepack pnpm --filter @nestometry/web typecheck",
+    "test": "corepack pnpm --filter @nestometry/web test",
+    "test:e2e": "corepack pnpm --filter @nestometry/web test:e2e",
+    "validate:room": "corepack pnpm exec tsx scripts/validate-room-json.mjs",
+    "validate:rooms": "corepack pnpm validate:room packages/berkeley-data/halls/unit-3-standard-triple.json && corepack pnpm validate:room packages/berkeley-data/halls/unit-3-standard-double.json",
+    "audit:prod": "corepack pnpm audit --prod --audit-level high",
+    "audit:public": "node scripts/check-public-readiness.mjs",
+    "verify": "corepack pnpm audit:prod && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm validate:rooms && corepack pnpm audit:public && corepack pnpm build && corepack pnpm test:e2e",
+    "render:unit3": "bash scripts/render-one-room.sh packages/berkeley-data/halls/unit-3-standard-triple.json assets/glb/berkeley/unit-3-standard-triple.glb assets/blend/berkeley/unit-3-standard-triple.blend",
+    "demo:unit3": "bash scripts/build-unit3-demo.sh"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "4.4.2",
+    "tsx": "4.23.12",
+    "typescript": "6.0.3",
+    "zod": "4.4.3"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "packageManager": "pnpm@10.34.0"
+}
