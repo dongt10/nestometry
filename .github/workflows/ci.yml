@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+
+      - name: Enable the pinned package manager
+        run: |
+          corepack enable
+          corepack pnpm --version
+
+      - name: Install dependencies from the lockfile
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Install managed Chromium
+        run: corepack pnpm --filter @nestometry/web exec playwright install --with-deps chromium
+
+      - name: Run the full verification suite
+        run: corepack pnpm verify

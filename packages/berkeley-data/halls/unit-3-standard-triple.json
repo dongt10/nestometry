@@ -1,0 +1,590 @@
+{
+  "schema_version": "0.2.0",
+  "school": "UC Berkeley",
+  "hall": "Unit 3",
+  "building": null,
+  "room_type": "standard_triple",
+  "display_name": "Unit 3 Standard Triple — Representative",
+  "accuracy_tier": "official_representative",
+  "units": "meters",
+  "representative_model": true,
+  "variation_warning": "UC Berkeley Housing: \"Please note that models depict one example of each room type. Rooms vary in size, layout, and furniture configuration.\" Exact dimensions are unverified until drawings or authorized measurements are obtained.",
+  "sources": [
+    {
+      "id": "berkeley_housing_unit3",
+      "title": "UC Berkeley Housing — Unit 3",
+      "url": "https://housing.berkeley.edu/explore-housing-options/residence-halls/unit-3/",
+      "source_type": "official_housing_page",
+      "used_for": [
+        "layout",
+        "furniture",
+        "warning",
+        "visual_reference"
+      ],
+      "confidence": "high",
+      "notes": "Verified live 2026-07-01. Page lists per-resident furnishings: extra-long twin bed (triples include a bunk bed & a lofted bed), desk, chair, dresser, mirror, closet, plus a Microchill refrigerator/microwave combo. No numeric dimensions stated."
+    },
+    {
+      "id": "berkeley_facilities_drawing_request",
+      "title": "UC Berkeley Facilities Drawing Requests",
+      "url": "https://facilities.berkeley.edu/requesting-campus-building-drawings",
+      "source_type": "facilities_drawing",
+      "used_for": [
+        "dimension"
+      ],
+      "confidence": "high",
+      "notes": "Process source only. No drawing dimensions have been obtained yet."
+    },
+    {
+      "id": "unit_room_reference_photo_2026_07",
+      "title": "UC Berkeley Housing — Unit 3 room interior photos",
+      "url": "https://housing.berkeley.edu/explore-housing-options/residence-halls/unit-3/",
+      "source_type": "official_housing_page",
+      "used_for": [
+        "material",
+        "furniture",
+        "layout",
+        "visual_reference"
+      ],
+      "confidence": "high",
+      "notes": "Official page photo gallery (confirmed 2026-07-01). Look-only; no image data copied. Establishes: light natural-wood furniture incl. wood bed frames, black rolling task chairs, blue carpet, dark window frame with radiator below, desk shelf hutches. Triple depiction: two desks under the lofted bed, third desk against exterior wall, dresser at foot of bunk. No numeric dimensions."
+    },
+    {
+      "id": "unit3_interior_model_pack_2026_07",
+      "title": "Unit 3 interior model pack (curated official 3D views, official photos, dimension estimates)",
+      "source_type": "other",
+      "used_for": [
+        "layout",
+        "furniture",
+        "dimension",
+        "visual_reference"
+      ],
+      "confidence": "high",
+      "notes": "Private look-only analysis pack assembled 2026-07-02 from official Unit 3 views, official room photos, and Twin XL scale. It supplies modeling estimates only, is not publicly distributed, and is not an official measurement source. Public layout claims are linked to the original Berkeley Housing sources; no reference image data is copied or shipped."
+    }
+  ],
+  "room_shell": {
+    "width": {
+      "value_m": null,
+      "status": "unknown",
+      "estimated": false,
+      "source_id": null,
+      "confidence": "unknown",
+      "notes": "Unknown until measured."
+    },
+    "depth": {
+      "value_m": null,
+      "status": "unknown",
+      "estimated": false,
+      "source_id": null,
+      "confidence": "unknown",
+      "notes": "Unknown until measured."
+    },
+    "height": {
+      "value_m": null,
+      "status": "unknown",
+      "estimated": false,
+      "source_id": null,
+      "confidence": "unknown",
+      "notes": "Unknown until measured."
+    }
+  },
+  "visualization_shell": {
+    "width": {
+      "value_m": 4.6,
+      "status": "estimated",
+      "estimated": true,
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "medium",
+      "notes": "Visualization-only room-width estimate derived from official Unit 3 views using Twin XL scale; not a verified Berkeley measurement."
+    },
+    "depth": {
+      "value_m": 3.95,
+      "status": "estimated",
+      "estimated": true,
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "medium",
+      "notes": "Visualization-only room-depth estimate derived from official Unit 3 views using Twin XL scale; not a verified Berkeley measurement."
+    },
+    "height": {
+      "value_m": 2.6,
+      "status": "estimated",
+      "estimated": true,
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "medium",
+      "notes": "Visualization-only room-height estimate derived from the Unit 3 interior model pack; not a verified Berkeley measurement."
+    }
+  },
+  "layout_constraints": [
+    {
+      "id": "beds-heads-at-window",
+      "description": "Loft (left side wall) and bunk (right side wall) both have their HEADS at the window wall, per the official 3D views and the official room photo (beds tight to the window).",
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "high",
+      "relation_type": "adjacent_to",
+      "subject": "bed_group",
+      "object": "window_1"
+    },
+    {
+      "id": "door-upper-left-corner",
+      "description": "Entry door sits at the upper-left corner of the entry (interior) wall; it swings inward with a clear zone in front.",
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "high",
+      "relation_type": "adjacent_to",
+      "subject": "door_1",
+      "object": "wall_entry"
+    },
+    {
+      "id": "closets-right-of-door",
+      "description": "Two closet modules (wardrobe + open shelf column) are built along the entry wall to the right of the door.",
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "high",
+      "relation_type": "adjacent_to",
+      "subject": "closet_group",
+      "object": "door_1"
+    },
+    {
+      "id": "nook-under-loft",
+      "description": "Two desks form a continuous study nook under the loft; the third desk stands against the window wall facing the window.",
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "high",
+      "relation_type": "under",
+      "subject": "desk_group",
+      "object": "loft_bed_1"
+    },
+    {
+      "id": "dresser-at-bunk-foot",
+      "description": "dresser_1 stands along the entry wall right of the closets, drawers opening into the room near the bunk-foot corner; dresser_2 sits in the loft-foot corner against the left side wall, drawers to the room - the position the official view shows, kept clear of the 0.9 m door swing.",
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "medium",
+      "relation_type": "near",
+      "subject": "dresser_group",
+      "object": "bunk_bed_1"
+    },
+    {
+      "id": "microchill-near-entry",
+      "description": "Microchill stands on the right wall's entry band between the closet line and the bunk's foot, door facing the open room (representative placement near the entry).",
+      "source_id": "unit3_interior_model_pack_2026_07",
+      "confidence": "medium",
+      "relation_type": "near",
+      "subject": "microchill_1",
+      "object": "closet_group"
+    }
+  ],
+  "objects": [
+    {
+      "id": "room_shell_1",
+      "type": "room_shell",
+      "label": "Room shell",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": null,
+          "status": "unknown",
+          "estimated": false,
+          "source_id": null,
+          "confidence": "unknown",
+          "notes": "Unknown until measured."
+        },
+        "y": {
+          "value_m": null,
+          "status": "unknown",
+          "estimated": false,
+          "source_id": null,
+          "confidence": "unknown",
+          "notes": "Unknown until measured."
+        },
+        "z": {
+          "value_m": null,
+          "status": "unknown",
+          "estimated": false,
+          "source_id": null,
+          "confidence": "unknown",
+          "notes": "Unknown until measured."
+        }
+      },
+      "position_hint": "Generated from visualization_shell estimates until verified room_shell dimensions are available.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "low",
+      "dimension_status": "unknown",
+      "notes": "Exact dimensions are missing. Generated geometry uses separately labeled visualization_shell estimates."
+    },
+    {
+      "id": "door_1",
+      "type": "door",
+      "label": "Entry door",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.914,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.05,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 2.032,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Entry wall; exact position and swing unknown.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "low",
+      "dimension_status": "estimated",
+      "notes": "Placeholder standard door size. Verify with drawing or measurement."
+    },
+    {
+      "id": "window_1",
+      "type": "window",
+      "label": "Exterior window",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": 2.4,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit_room_reference_photo_2026_07",
+          "confidence": "medium",
+          "notes": "Estimated from official Unit 3 room photos (window spans most of the exterior wall); not a verified measurement."
+        },
+        "y": {
+          "value_m": 0.05,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 1.6,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit_room_reference_photo_2026_07",
+          "confidence": "medium",
+          "notes": "Estimated from official Unit 3 room photos (tall window, low sill); not a verified measurement."
+        }
+      },
+      "position_hint": "Exterior wall opposite entry; exact position unknown.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "low",
+      "dimension_status": "estimated",
+      "notes": "Large dark-framed window per official photos; size estimated from photos, sill height estimated ~0.55 m. Verify with drawing or measurement."
+    },
+    {
+      "id": "loft_bed_1",
+      "type": "loft_bed",
+      "label": "Loft bed",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": 2.083,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 1.016,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 1.75,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Side wall; exact placement pending official layout verification.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "medium",
+      "dimension_status": "estimated",
+      "notes": "Twin XL footprint placeholder with loft height estimate."
+    },
+    {
+      "id": "bunk_bed_1",
+      "type": "bunk_bed",
+      "label": "Bunk bed",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": 2.083,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 1.016,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 1.75,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Opposite side wall from loft bed; exact placement pending official layout verification.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "medium",
+      "dimension_status": "estimated",
+      "notes": "Twin XL bunk footprint placeholder."
+    },
+    {
+      "id": "desk_group",
+      "type": "desk",
+      "label": "Student desks",
+      "count": 3,
+      "dimensions_m": {
+        "x": {
+          "value_m": 1.067,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.61,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 0.762,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Official page depiction: two desks under the lofted bed, third desk against the exterior (window) wall",
+      "source_id": "unit_room_reference_photo_2026_07",
+      "confidence": "medium",
+      "dimension_status": "estimated",
+      "notes": "Desk size placeholder."
+    },
+    {
+      "id": "chair_group",
+      "type": "chair",
+      "label": "Desk chairs",
+      "count": 3,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.45,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.45,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 0.85,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": null,
+          "confidence": "low",
+          "notes": "Placeholder visualization default; not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "One per desk.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "medium",
+      "dimension_status": "estimated",
+      "notes": "Chair size placeholder."
+    },
+    {
+      "id": "dresser_group",
+      "type": "dresser",
+      "label": "Dressers/storage",
+      "count": 2,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.762,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.61,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 0.762,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Official page depiction shows a dresser at the foot of the bunk bed; second near storage zone",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "medium",
+      "dimension_status": "estimated",
+      "notes": "Placeholder."
+    },
+    {
+      "id": "closet_group",
+      "type": "closet",
+      "label": "Closets",
+      "count": 2,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.914,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.61,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 1.981,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Near entry/interior wall; exact built-in dimensions unknown.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "medium",
+      "dimension_status": "estimated",
+      "notes": "Placeholder built-in storage."
+    },
+    {
+      "id": "microchill_1",
+      "type": "microchill",
+      "label": "Microchill",
+      "count": 1,
+      "dimensions_m": {
+        "x": {
+          "value_m": 0.508,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "y": {
+          "value_m": 0.508,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        },
+        "z": {
+          "value_m": 1.118,
+          "status": "estimated",
+          "estimated": true,
+          "source_id": "unit3_interior_model_pack_2026_07",
+          "confidence": "medium",
+          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+        }
+      },
+      "position_hint": "Near wall/outlet; exact placement unknown.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "high",
+      "dimension_status": "estimated",
+      "notes": "Microchill refrigerator/microwave combo confirmed on the official Unit 3 page (2026-07-01). Dimensions remain placeholder estimates."
+    },
+    {
+      "id": "mirror_group",
+      "type": "other",
+      "label": "Mirror",
+      "count": 3,
+      "position_hint": "Typically wall- or closet-mounted; placement unverified.",
+      "source_id": "berkeley_housing_unit3",
+      "confidence": "high",
+      "dimension_status": "unknown",
+      "notes": "Official page lists a mirror per resident (2026-07-01). Not rendered in the 3D model; size and mounting unverified."
+    }
+  ],
+  "needs_measurement": [
+    {
+      "id": "u3-triple-room-width-depth-height",
+      "item": "Room shell width, depth, height",
+      "why_needed": "Required for accurate scale and fit planning.",
+      "best_source": "facilities_drawing",
+      "priority": "high"
+    },
+    {
+      "id": "u3-triple-opening-positions",
+      "item": "Door and window size/position",
+      "why_needed": "Required for accurate room shell and furniture placement.",
+      "best_source": "facilities_drawing",
+      "priority": "high"
+    },
+    {
+      "id": "u3-triple-furniture-specs",
+      "item": "Bed, desk, chair, dresser, closet, Microchill dimensions",
+      "why_needed": "Required for fit planning and student move-in use cases.",
+      "best_source": "housing_spec",
+      "priority": "high"
+    }
+  ],
+  "public_notes": [
+    "Representative model only; exact room dimensions are not verified.",
+    "Furniture list confirmed against the official UC Berkeley Housing Unit 3 page on 2026-07-01: extra-long twin beds (bunk + loft in triples), desk, chair, dresser, mirror, and closet per resident, plus a shared Microchill.",
+    "Bathrooms are community bathrooms located on each floor, not inside the room.",
+    "Rooms vary in size, layout, and furniture configuration (official UC Berkeley Housing warning)."
+  ],
+  "internal_notes": [
+    "Public-source reconciliation completed 2026-08-10; the model remains representative and should be revised when authoritative measured drawings become available.",
+    "visualization_shell dimensions are sourced modeling estimates, not verified Berkeley measurements."
+  ]
+}
