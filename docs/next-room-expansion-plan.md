@@ -1,6 +1,6 @@
 # Room Expansion Plan
 
-The current pipeline supports Unit 3 standard double and triple representative examples.
+The current pipeline supports only Unit 3 standard double and triple representative examples. The long-term coverage goal is a visual catalog of UC Berkeley residence halls and apartments, including documented room and unit variants wherever safe, shareable evidence is available.
 
 ## Reusable pipeline
 
@@ -24,8 +24,9 @@ For each geometry axis, a usable verified `room_shell` value wins; otherwise the
 5. Stern room types
 6. Foothill and Clark Kerr suite archetypes
 7. Martinez Commons room types
+8. University apartment communities and unit archetypes
 
-Each hall needs its own sources. Similar architecture is not evidence that furniture, openings, or dimensions are identical.
+This order is only a starting point; a well-sourced contribution can advance any UC Berkeley housing type. Each hall, apartment community, and meaningful variant needs its own sources. Similar architecture is not evidence that furniture, openings, or dimensions are identical.
 
 ## Expected generator extensions
 

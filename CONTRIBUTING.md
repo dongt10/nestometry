@@ -1,6 +1,19 @@
 # Contributing
 
-Thanks for helping improve the viewer. Accuracy and privacy matter more than visual completeness.
+Thanks for helping improve the viewer. Nestometry is incomplete by design and welcomes contributors of every experience level. The long-term goal is to represent UC Berkeley residence halls and apartments wherever safe, shareable evidence is available. Accuracy and privacy matter more than visual completeness.
+
+## Ways to contribute
+
+You do not need Blender or Three.js experience to help. Useful contributions include:
+
+- finding and documenting public, authoritative room sources;
+- recording permitted measurements with clear provenance;
+- adding a residence-hall, apartment, room, or layout variant;
+- improving room data, the procedural generator, or the 2D and 3D viewer;
+- improving accessibility, performance, automated tests, documentation, or QA; and
+- reporting an inaccuracy, missing source, confusing interaction, or useful feature request.
+
+Small, focused contributions are welcome. You can correct one source, dimension status, furniture detail, test, or paragraph without taking responsibility for a complete building. If you want to add a new housing type, start with the [room expansion plan](docs/next-room-expansion-plan.md) and open an issue describing the public evidence you found.
 
 ## Before contributing
 

@@ -1,8 +1,16 @@
 # Nestometry
 
-Source-backed dorm rooms in 2D and 3D. Nestometry is an interactive viewer for representative dorm-room layouts; the current dataset covers standard double and triple examples for Unit 3 at UC Berkeley.
+Source-backed dorm rooms in 2D and 3D. Nestometry is a work-in-progress interactive viewer for representative dorm-room layouts; the current dataset covers only standard double and triple examples for Unit 3 at UC Berkeley.
 
 > **Unofficial project:** This is an independent student project. It is not affiliated with, endorsed by, or an official service of UC Berkeley or the Regents of the University of California. Room models are representative examples, not assigned-room digital twins.
+
+> **Project status:** Nestometry is incomplete and actively growing. Contributions of every size and from every experience level are welcome.
+
+## Vision and current scope
+
+The long-term goal is a community-built visual catalog of UC Berkeley residence halls and apartments, including their documented room and unit variants. It should make it easier for students to understand a space and plan furniture, storage, rugs, and other belongings before move-in. Nestometry is built on the idea that seeing a space is often the clearest way to understand and plan it.
+
+The current two-room Unit 3 dataset is a foundation, not a complete housing catalog. Models and estimates must never be treated as fit guarantees: room assignments vary, exact dimensions are often unavailable, and students should verify fit-critical measurements with UC Berkeley Housing or an authorized on-site measurement.
 
 ## What it does
 
@@ -107,7 +115,9 @@ The viewer has no accounts, analytics, uploads, application backend, or client-s
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Accuracy corrections should include a public source and should distinguish observed facts from estimates.
+This project is open to contributions of all kinds—not only code or 3D modeling. Public-source research, permitted measurements, room data, Blender models, viewer improvements, accessibility work, tests, documentation, and accuracy reports all help expand the catalog. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [room expansion plan](docs/next-room-expansion-plan.md) to get started.
+
+Accuracy corrections should include a public source and distinguish observed facts from estimates. A contribution can improve one small detail without completing an entire building.
 
 ## License
 
