@@ -13,7 +13,10 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   workers: 1,
   reporter: isCI ? 'line' : 'list',
-  timeout: 120_000,
+  // GitHub's software-rendered WebGL can exhaust the two-minute budget for the
+  // 3D arrange story. Keep fast local feedback while giving CI extra headroom
+  // without weakening or skipping any assertions.
+  timeout: isCI ? 240_000 : 120_000,
   expect: {
     timeout: 10_000
   },
