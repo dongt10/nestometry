@@ -10,12 +10,14 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "benchmark:arrange": "node scripts/benchmark-arrange.mjs"
   },
   "dependencies": {
     "@react-three/drei": "10.7.8",
     "@react-three/fiber": "9.7.0",
     "@react-three/postprocessing": "3.0.5",
+    "fflate": "0.8.3",
     "n8ao": "1.10.2",
     "next": "16.3.0",
     "react": "19.2.8",

@@ -10,6 +10,7 @@ DOUBLE_GLB="assets/glb/berkeley/unit-3-standard-double.glb"
 DOUBLE_BLEND="assets/blend/berkeley/unit-3-standard-double.blend"
 
 WEB_DIR="apps/web/public/models/berkeley"
+COLLIDER_DIR="assets/colliders/berkeley"
 
 if ! command -v corepack >/dev/null 2>&1; then
   echo "ERROR: corepack is not installed. Install a supported Node.js release, then rerun."
@@ -37,7 +38,9 @@ if [ -n "${BLENDER_BIN:-}" ]; then
   mkdir -p "$WEB_DIR"
   cp "$TRIPLE_GLB" "$WEB_DIR/"
   cp "$DOUBLE_GLB" "$WEB_DIR/"
-  echo "Copied both optimized GLBs to $WEB_DIR/."
+  cp "$COLLIDER_DIR/unit-3-standard-triple.colliders.json" "$WEB_DIR/"
+  cp "$COLLIDER_DIR/unit-3-standard-double.colliders.json" "$WEB_DIR/"
+  echo "Copied both optimized GLBs and collider manifests to $WEB_DIR/."
 else
   echo "WARNING: Blender not found. Skipping GLB render."
   echo "Install Blender (or set BLENDER_BIN), then run: corepack pnpm demo:unit3"

@@ -2,253 +2,404 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 const TRIPLE_ID = 'unit-3-standard-triple';
 const DOUBLE_ID = 'unit-3-standard-double';
-
 type Point = { x: number; y: number };
 
 function watchBrowserErrors(page: Page): string[] {
   const errors: string[] = [];
-  const isAllowedWarning = (text: string) =>
-    // Upstream @react-three/fiber still constructs THREE.Clock internally in
-    // the pinned compatible release; it is non-fatal and not app-authored.
+  const allowed = (text: string) =>
     text === 'THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.' ||
-    // Playwright screenshots read the software-rendered WebGL framebuffer.
-    // Chromium reports that harness-induced synchronization as a perf warning.
     (text.includes('GL Driver Message') && text.includes('GPU stall due to ReadPixels'));
-
-  page.on('pageerror', (error) => {
-    errors.push(`pageerror: ${error.message}`);
-  });
+  page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`));
   page.on('console', (message) => {
-    if (message.type() === 'error') {
-      errors.push(`console.error: ${message.text()}`);
-    } else if (message.type() === 'warning' && !isAllowedWarning(message.text())) {
+    if (message.type() === 'error') errors.push(`console.error: ${message.text()}`);
+    if (message.type() === 'warning' && !allowed(message.text())) {
       errors.push(`console.warning: ${message.text()}`);
     }
   });
-
   return errors;
 }
 
-async function expectUrlState(
-  page: Page,
-  expected: { room: string; mode: '3d' | '2d'; dims?: boolean }
-) {
-  await expect
-    .poll(() => {
-      const url = new URL(page.url());
-      return {
-        hall: url.searchParams.get('hall'),
-        room: url.searchParams.get('room'),
-        mode: url.searchParams.get('mode'),
-        dims: url.searchParams.get('dims')
-      };
-    })
-    .toEqual({
-      hall: 'Unit 3',
-      room: expected.room,
-      mode: expected.mode,
-      dims: expected.dims ? '1' : null
-    });
+async function suppressTips(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('nestometry:tip:v1:rooms', '1');
+    localStorage.setItem('nestometry:tip:v1:arrange', '1');
+    localStorage.setItem('nestometry:tip:v1:share', '1');
+  });
 }
 
-async function waitForModelResponse(page: Page, roomId: string) {
-  return page.waitForResponse(
-    (response) =>
-      new URL(response.url()).pathname.endsWith(`/models/berkeley/${roomId}.glb`) &&
-      response.status() === 200
+async function suppressNextDevTools(page: Page) {
+  const portal = page.locator('nextjs-portal');
+  if (await portal.count()) {
+    await portal.evaluateAll((elements) => {
+      for (const element of elements) {
+        (element as HTMLElement).style.display = 'none';
+      }
+    });
+  }
+}
+
+async function waitForModel(page: Page, roomId: string) {
+  return page.waitForResponse((response) =>
+    new URL(response.url()).pathname.endsWith(`/models/berkeley/${roomId}.glb`) &&
+    response.status() === 200
   );
 }
 
-async function openDefaultRoom(page: Page) {
-  const modelResponse = waitForModelResponse(page, TRIPLE_ID);
-  await page.goto('/');
-  await modelResponse;
-  await expect(page.locator('.topbar-title')).toHaveText('Unit 3 Standard Triple — Representative');
-  await expect(page.locator('.stage-scene canvas')).toBeVisible();
-  await expect(page.getByText('Loading room model…')).toHaveCount(0);
-  await expectUrlState(page, { room: TRIPLE_ID, mode: '3d' });
+async function waitForCollider(page: Page, roomId: string) {
+  return page.waitForResponse((response) =>
+    new URL(response.url()).pathname.endsWith(`/models/berkeley/${roomId}.colliders.json`) &&
+    response.status() === 200
+  );
 }
 
-/**
- * Arrange mode exposes a grab cursor only when its raycaster is over a movable
- * furniture instance. Scan a bounded portion of the fixed canvas instead of
- * depending on a brittle pixel captured from one GPU/rendering environment.
- */
-async function findMovablePoint(canvas: Locator): Promise<Point> {
-  const preferredFractions: Point[] = [
-    { x: 0.5, y: 0.52 },
-    { x: 0.45, y: 0.58 },
-    { x: 0.55, y: 0.58 },
-    { x: 0.4, y: 0.64 },
-    { x: 0.6, y: 0.64 }
-  ];
-  const gridFractions: Point[] = [];
-  for (let y = 0.2; y <= 0.82; y += 0.04) {
-    for (let x = 0.22; x <= 0.78; x += 0.04) {
-      gridFractions.push({ x, y });
-    }
-  }
+async function openRoom(page: Page, roomId = TRIPLE_ID) {
+  await suppressTips(page);
+  const response = waitForModel(page, roomId);
+  const colliderResponse = waitForCollider(page, roomId);
+  await page.goto(roomId === TRIPLE_ID ? '/' : `/?room=${roomId}`);
+  await Promise.all([response, colliderResponse]);
+  await suppressNextDevTools(page);
+  await expect(page.locator('.stage-scene canvas')).toBeVisible();
+  await expect(page.getByText('loading room model…')).toHaveCount(0);
+  await expect(page.locator('.room-trigger')).toContainText(
+    roomId === TRIPLE_ID ? 'unit 3 standard triple' : 'unit 3 standard double'
+  );
+}
 
-  const point = await canvas.evaluate((element, fractions) => {
+async function expectLowercaseVisibleCopy(page: Page) {
+  const copy = await page.locator('body').innerText();
+  expect(copy).toBe(copy.toLocaleLowerCase('en-US'));
+  const attributeViolations = await page.locator('[aria-label], [title], [placeholder], [alt]').evaluateAll((elements) => {
+    const attributes = ['aria-label', 'title', 'placeholder', 'alt'];
+    return elements.flatMap((element) => {
+      const root = element.getRootNode();
+      if (
+        element.closest('nextjs-portal') ||
+        (root instanceof ShadowRoot && root.host.localName === 'nextjs-portal') ||
+        element.getAttribute('aria-label') === 'Open Next.js Dev Tools'
+      ) return [];
+      return attributes.flatMap((attribute) => {
+        const value = element.getAttribute(attribute);
+        return value && value !== value.toLocaleLowerCase('en-US')
+          ? [`${attribute}=${JSON.stringify(value)}`]
+          : [];
+      });
+    });
+  });
+  expect(attributeViolations).toEqual([]);
+}
+
+async function movePlanObjectWithKeyboard(object: Locator, key: 'ArrowLeft' | 'ArrowRight') {
+  await object.focus();
+  await object.press(key);
+  await object.press(key);
+}
+
+async function findMovablePoint(canvas: Locator): Promise<Point> {
+  const fractions: Point[] = [];
+  for (let y = 0.18; y <= 0.82; y += 0.04) {
+    for (let x = 0.18; x <= 0.82; x += 0.04) fractions.push({ x, y });
+  }
+  const point = await canvas.evaluate((element, candidates) => {
     const roomCanvas = element as HTMLCanvasElement;
     const box = roomCanvas.getBoundingClientRect();
-    for (const fraction of fractions) {
-      const candidate = {
-        x: box.x + box.width * fraction.x,
-        y: box.y + box.height * fraction.y
+    for (const candidate of candidates) {
+      const position = {
+        x: box.x + box.width * candidate.x,
+        y: box.y + box.height * candidate.y
       };
-      roomCanvas.dispatchEvent(
-        new PointerEvent('pointermove', {
-          bubbles: true,
-          pointerId: 1,
-          pointerType: 'mouse',
-          clientX: candidate.x,
-          clientY: candidate.y,
-          buttons: 0
-        })
-      );
-      if (roomCanvas.style.cursor === 'grab') return candidate;
+      roomCanvas.dispatchEvent(new PointerEvent('pointermove', {
+        bubbles: true,
+        pointerId: 77,
+        pointerType: 'mouse',
+        clientX: position.x,
+        clientY: position.y,
+        buttons: 0
+      }));
+      if (roomCanvas.style.cursor === 'grab') return position;
     }
     return null;
-  }, [...preferredFractions, ...gridFractions]);
-
-  if (point) return point;
-
-  throw new Error('No movable furniture was found in the bounded canvas scan.');
+  }, fractions);
+  if (!point) throw new Error('no movable furniture was found in the bounded 3d canvas scan');
+  return point;
 }
 
-async function beginFurnitureDrag(canvas: Locator, point: Point, pointerId: number) {
+async function dragFurnitureOnce(canvas: Locator, point: Point) {
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error('3d canvas did not render');
+  const delta = {
+    x: point.x < box.x + box.width / 2 ? 72 : -72,
+    y: point.y < box.y + box.height / 2 ? 24 : -24
+  };
   await canvas.dispatchEvent('pointerdown', {
-    pointerId,
+    pointerId: 77,
     pointerType: 'mouse',
     clientX: point.x,
     clientY: point.y,
     button: 0,
     buttons: 1
   });
-}
-
-async function moveFurniture(canvas: Locator, point: Point, pointerId: number) {
-  const offsets: Point[] = [
-    { x: 64, y: 0 },
-    { x: -64, y: 0 },
-    { x: 0, y: 64 },
-    { x: 0, y: -64 },
-    { x: 48, y: 48 }
-  ];
-
-  for (const offset of offsets) {
-    await canvas.dispatchEvent('pointermove', {
-      pointerId,
-      pointerType: 'mouse',
-      clientX: point.x + offset.x,
-      clientY: point.y + offset.y,
-      buttons: 1
-    });
-    if (await canvas.page().getByRole('status').filter({ hasText: 'Custom arrangement' }).count()) {
-      return;
-    }
-  }
-
-  throw new Error('The selected movable furniture did not move in any bounded drag direction.');
-}
-
-async function endFurnitureDrag(canvas: Locator, point: Point, pointerId: number) {
-  await canvas.dispatchEvent('pointerup', {
-    pointerId,
+  await expect(canvas.page().locator('.dim3d-badge')).toHaveCount(0);
+  await canvas.dispatchEvent('pointermove', {
+    pointerId: 77,
     pointerType: 'mouse',
-    clientX: point.x,
-    clientY: point.y,
+    clientX: point.x + delta.x,
+    clientY: point.y + delta.y,
+    buttons: 1
+  });
+  await expect(canvas.page().getByRole('status').filter({ hasText: 'custom arrangement' })).toBeVisible();
+  await canvas.dispatchEvent('pointerup', {
+    pointerId: 77,
+    pointerType: 'mouse',
+    clientX: point.x + delta.x,
+    clientY: point.y + delta.y,
     button: 0,
     buttons: 0
   });
 }
 
-test('loads both rooms, synchronizes view state to the URL, and has no browser errors', async ({ page }) => {
-  const browserErrors = watchBrowserErrors(page);
+test('browses rooms, keeps drawers model-stable, and exposes lowercase evidence details', async ({ page }) => {
+  const errors = watchBrowserErrors(page);
+  const glbRequests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().endsWith('.glb')) glbRequests.push(request.url());
+  });
   const rootResponse = await page.request.get('/');
   expect(rootResponse.headers()['x-powered-by']).toBeUndefined();
   expect(rootResponse.headers()['x-content-type-options']).toBe('nosniff');
   expect(rootResponse.headers()['x-frame-options']).toBe('DENY');
   expect(rootResponse.headers()['content-security-policy']).toContain("frame-ancestors 'none'");
-  await openDefaultRoom(page);
+  const iconResponse = await page.request.get('/icon.svg');
+  expect(iconResponse.status()).toBe(200);
+  expect(iconResponse.headers()['content-type']).toContain('image/svg+xml');
 
-  const roomSelect = page.getByLabel('Room');
-  const doubleResponse = waitForModelResponse(page, DOUBLE_ID);
-  await roomSelect.selectOption(DOUBLE_ID);
+  await openRoom(page);
+  await expect(page.getByText('incomplete catalog · contribute ↗')).toBeVisible();
+  const tripleRequests = glbRequests.filter((url) => url.includes(TRIPLE_ID)).length;
+
+  await page.getByRole('button', { name: 'details', exact: true }).click();
+  const details = page.getByRole('dialog', { name: 'details' });
+  await expect(details).toBeVisible();
+  await expect(details.getByText('room summary')).toBeVisible();
+  await details.getByText('dimensions and confidence').click();
+  await expect(details.getByText(/official dimensions are unknown/)).toBeVisible();
+  await details.getByRole('button', { name: 'metric' }).click();
+  await details.locator('[data-sheet-close="true"]').click();
+
+  await page.getByRole('button', { name: 'layers', exact: true }).click();
+  const layers = page.getByRole('dialog', { name: 'layers' });
+  await expect(layers.getByText('smart wall fade')).toBeVisible();
+  await expect(layers.getByText('confidence markers')).toBeVisible();
+  await layers.locator('[data-sheet-close="true"]').click();
+  expect(glbRequests.filter((url) => url.includes(TRIPLE_ID))).toHaveLength(tripleRequests);
+
+  await page.locator('.room-trigger').click();
+  const rooms = page.getByRole('dialog', { name: 'rooms' });
+  await rooms.getByPlaceholder('search halls, rooms, or types').fill('double');
+  const doubleResponse = waitForModel(page, DOUBLE_ID);
+  await rooms.getByRole('button', { name: /standard double/ }).click();
   await doubleResponse;
-  await expect(page.locator('.topbar-title')).toHaveText('Unit 3 Standard Double — Representative');
-  await expect(page.getByText('Loading room model…')).toHaveCount(0);
-  await expectUrlState(page, { room: DOUBLE_ID, mode: '3d' });
+  await expect(page.locator('.room-trigger')).toContainText('unit 3 standard double');
 
-  await page.getByRole('button', { name: '2D', exact: true }).click();
-  await expect(page.getByRole('button', { name: '2D', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByText(/^Top-down view\./)).toBeVisible();
-  await expectUrlState(page, { room: DOUBLE_ID, mode: '2d' });
+  await page.getByRole('button', { name: 'dimensions', exact: true }).click();
+  await expect(page.locator('.dim3d-badge').first()).toBeVisible();
+  await page.getByRole('button', { name: 'arrange', exact: true }).click();
+  const canvas = page.locator('.stage-scene canvas');
+  await dragFurnitureOnce(canvas, await findMovablePoint(canvas));
+  await expect(page.locator('.dim3d-badge').first()).toBeVisible();
+  await expect(page.locator('.stage-arrange-note')).toContainText('custom arrangement');
+  await page.getByRole('button', { name: 'reset', exact: true }).click();
+  await expect(page.locator('.stage-arrange-note')).toHaveCount(0);
+  await expect(page.locator('.dim3d-badge').first()).toBeVisible();
+  await page.getByRole('button', { name: 'arrange', exact: true }).click();
 
-  await page.getByRole('button', { name: '3D', exact: true }).click();
-  await expect(page.getByRole('button', { name: '3D', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByText(/^Representative model\./)).toBeVisible();
-  await expectUrlState(page, { room: DOUBLE_ID, mode: '3d' });
-
-  expect(browserErrors).toEqual([]);
+  await page.getByRole('button', { name: '2d', exact: true }).click();
+  const plan = page.getByRole('application', { name: /editable floor plan/ });
+  await expect(plan).toBeVisible();
+  await expect(page.getByRole('button', { name: '2d', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.stage-accuracy-chip')).toContainText('representative plan · dimensions estimated · actual rooms vary');
+  await expect(plan.locator('.plan-dimension')).toHaveCount(2);
+  await page.getByRole('button', { name: 'dimensions', exact: true }).click();
+  await expect(plan.locator('.plan-dimension')).toHaveCount(0);
+  await page.getByRole('button', { name: 'dimensions', exact: true }).click();
+  await expect(plan.locator('.plan-dimension')).toHaveCount(2);
+  await page.getByRole('button', { name: 'layers', exact: true }).click();
+  const planLayers = page.getByRole('dialog', { name: 'layers' });
+  await expect(planLayers.getByText('desks', { exact: true })).toBeVisible();
+  await expect(planLayers.getByText('windows', { exact: true })).toBeVisible();
+  await planLayers.locator('[data-sheet-close="true"]').click();
+  await page.getByRole('button', { name: '3d', exact: true }).click();
+  await expect(page.locator('.stage-scene canvas')).toBeVisible();
+  await expectLowercaseVisibleCopy(page);
+  expect(errors).toEqual([]);
 });
 
-test('keeps arrange feedback synchronized through drag, reset, and room changes', async ({ page }) => {
-  const browserErrors = watchBrowserErrors(page);
-  await openDefaultRoom(page);
+test('edits one shared 2d scene with inventory, custom blocks, undo, local restore, and sharing', async ({ page, context }) => {
+  const errors = watchBrowserErrors(page);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await openRoom(page, DOUBLE_ID);
+  await page.getByRole('button', { name: '2d', exact: true }).click();
+  await page.getByRole('button', { name: 'arrange', exact: true }).click();
+  await expect(page.getByRole('toolbar', { name: 'arrange tools' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Dimensions', exact: true }).click();
-  await expectUrlState(page, { room: TRIPLE_ID, mode: '3d', dims: true });
-  const dimensionBadges = page.locator('.dim3d-badge');
-  await expect.poll(() => dimensionBadges.count()).toBeGreaterThan(0);
+  const fixedBookshelf = page.locator('[data-plan-id="bookshelf_1"]');
+  await fixedBookshelf.focus();
+  await fixedBookshelf.press('Enter');
+  await expect(page.getByRole('toolbar', { name: 'arrange tools' }).getByRole('button', { name: 'rotate 90°' })).toBeDisabled();
+  await expect(page.locator('.selection-bar').getByRole('button', { name: 'rotate 90°' })).toBeDisabled();
 
-  const arrangeButton = page.getByRole('button', { name: 'Arrange', exact: true });
-  await expect(arrangeButton).toBeVisible();
-  await arrangeButton.click();
-  await expect(arrangeButton).toHaveAttribute('aria-pressed', 'true');
+  const desk = page.locator('[data-plan-id="desk_1"]');
+  const originalX = Number(await desk.locator('rect').getAttribute('x'));
+  await movePlanObjectWithKeyboard(desk, 'ArrowLeft');
+  await expect(page.getByRole('status').filter({ hasText: 'custom arrangement' })).toBeVisible();
+  const movedX = Number(await page.locator('[data-plan-id="desk_1"] rect').getAttribute('x'));
+  expect(movedX).toBeLessThan(originalX);
 
-  const canvas = page.locator('.stage-scene canvas');
-  const point = await findMovablePoint(canvas);
-  await beginFurnitureDrag(canvas, point, 11);
-  await expect(dimensionBadges).toHaveCount(0);
-  await moveFurniture(canvas, point, 11);
-  const customNote = page.getByRole('status').filter({ hasText: 'Custom arrangement' });
-  await expect(customNote).toBeVisible();
-  await endFurnitureDrag(canvas, point, 11);
-  await expect.poll(() => dimensionBadges.count()).toBeGreaterThan(0);
-  const resetButton = page.getByRole('button', { name: 'Reset layout', exact: true });
-  await expect(resetButton).toBeVisible();
-  await expect(resetButton).toBeEnabled();
+  await page.getByRole('button', { name: 'undo', exact: true }).click();
+  const onceUndoneX = Number(await page.locator('[data-plan-id="desk_1"] rect').getAttribute('x'));
+  expect(onceUndoneX).toBeGreaterThan(movedX);
+  await movePlanObjectWithKeyboard(page.locator('[data-plan-id="desk_1"]'), 'ArrowRight');
 
-  // Software-rendered WebGL can keep Playwright's scroll-into-view action
-  // waiting even though this top-bar control is already visible.
-  await resetButton.dispatchEvent('click');
-  await expect(customNote).toHaveCount(0);
-  await expect(resetButton).toHaveCount(0);
-  await expect.poll(() => dimensionBadges.count()).toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'add item', exact: true }).click();
+  const addDialog = page.getByRole('dialog', { name: 'add an item' });
+  await addDialog.getByLabel('preset').selectOption('table');
+  await addDialog.getByRole('button', { name: 'add to plan' }).click();
+  await expect(page.locator('[data-plan-id="custom_1"]')).toBeVisible();
+  await expect(page.locator('.warning-count')).toHaveText(/\d+ warnings?/);
+  await expect(page.locator('.planner-warning-summary')).toContainText('custom 1');
+  await page.getByRole('button', { name: 'remove from plan' }).click();
+  await expect(page.locator('[data-plan-id="custom_1"]')).toHaveCount(0);
 
-  // Dirty the restored layout again, then prove a room change drops all
-  // session-only arrangement state instead of leaking cached GLB transforms.
-  await canvas.dispatchEvent('pointermove', {
-    pointerId: 12,
-    pointerType: 'mouse',
-    clientX: point.x,
-    clientY: point.y,
-    buttons: 0
+  const bed = page.locator('[data-plan-id="twin_xl_bed_1"]');
+  await bed.focus();
+  await bed.press('Enter');
+  await page.getByRole('button', { name: 'remove from plan' }).click();
+  await expect(bed).toHaveCount(0);
+  await page.getByRole('button', { name: 'inventory', exact: true }).click();
+  const inventory = page.getByRole('dialog', { name: 'removed from plan' });
+  await inventory.getByRole('button', { name: 'restore' }).click();
+  await inventory.locator('[data-sheet-close="true"]').click();
+  await expect(page.locator('[data-plan-id="twin_xl_bed_1"]')).toBeVisible();
+
+  const savedX = Number(await page.locator('[data-plan-id="desk_1"] rect').getAttribute('x'));
+  await page.reload();
+  await page.getByRole('button', { name: '2d', exact: true }).click();
+  await expect.poll(async () => Number(await page.locator('[data-plan-id="desk_1"] rect').getAttribute('x'))).toBe(savedX);
+  await expect(page.getByRole('status').filter({ hasText: 'custom arrangement' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'share', exact: true }).click();
+  const share = page.getByRole('dialog', { name: 'share this plan' });
+  await expect(share).toContainText('anyone with the link can read and edit its layout and custom item labels');
+  await share.getByRole('button', { name: 'copy share link' }).click();
+  const sharedUrl = await share.getByLabel('share link').inputValue();
+  expect(sharedUrl).toContain('#layout=v1.');
+  const sharedPage = await context.newPage();
+  const sharedErrors = watchBrowserErrors(sharedPage);
+  await sharedPage.goto(sharedUrl);
+  await expect(sharedPage.locator('.room-trigger')).toContainText('unit 3 standard double');
+  await expect(sharedPage.getByRole('application', { name: /editable floor plan/ })).toBeVisible();
+  await expect(sharedPage.getByRole('status').filter({ hasText: 'custom arrangement' })).toBeVisible();
+  await sharedPage.getByRole('button', { name: 'arrange', exact: true }).click();
+  await movePlanObjectWithKeyboard(sharedPage.locator('[data-plan-id="desk_1"]'), 'ArrowRight');
+  await expect.poll(() => new URL(sharedPage.url()).hash).toBe('');
+
+  const switchPage = await context.newPage();
+  await suppressTips(switchPage);
+  const switchErrors = watchBrowserErrors(switchPage);
+  await switchPage.goto(sharedUrl);
+  await expect(switchPage.locator('.room-trigger')).toContainText('unit 3 standard double');
+  await switchPage.locator('.room-trigger').click();
+  const rooms = switchPage.getByRole('dialog', { name: 'rooms' });
+  const tripleResponse = waitForModel(switchPage, TRIPLE_ID);
+  await rooms.getByRole('button', { name: /standard triple/ }).click();
+  await tripleResponse;
+  await expect.poll(() => new URL(switchPage.url()).hash).toBe('');
+  await expect(switchPage.locator('.room-trigger')).toContainText('unit 3 standard triple');
+  await switchPage.reload();
+  await expect(switchPage.locator('.room-trigger')).toContainText('unit 3 standard triple');
+  expect(switchErrors).toEqual([]);
+  expect(sharedErrors).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test.describe('mobile planner', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test('uses full-screen sheets, 44px controls, touch editing, and two-finger plan navigation', async ({ page, context }) => {
+    const errors = watchBrowserErrors(page);
+    await openRoom(page);
+    const controls = page.locator('.mobile-dock button');
+    await expect(controls).toHaveCount(5);
+    for (const box of await controls.evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().toJSON()))) {
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.width).toBeGreaterThanOrEqual(44);
+    }
+
+    await page.getByRole('button', { name: /rooms/ }).click();
+    const sheet = page.getByRole('dialog', { name: 'rooms' });
+    const sheetBox = await sheet.boundingBox();
+    expect(sheetBox?.width).toBe(390);
+    expect(sheetBox?.height).toBe(844);
+    await sheet.getByPlaceholder('search halls, rooms, or types').fill('double');
+    const response = waitForModel(page, DOUBLE_ID);
+    await sheet.getByRole('button', { name: /standard double/ }).click();
+    await response;
+
+    await page.getByRole('button', { name: /2d/ }).click();
+    await page.getByRole('button', { name: /arrange/ }).click();
+    const plan = page.getByRole('application', { name: /editable floor plan/ });
+    const object = page.locator('[data-plan-id="desk_1"] rect');
+    const box = await object.boundingBox();
+    if (!box) throw new Error('desk footprint did not render');
+    const cdp = await context.newCDPSession(page);
+    const objectX = box.x + box.width / 2;
+    const objectY = box.y + box.height / 2;
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x: objectX, y: objectY, id: 21 }]
+    });
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{ x: objectX + 28, y: objectY, id: 21 }]
+    });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await expect(page.getByRole('status').filter({ hasText: 'custom arrangement' })).toBeVisible();
+
+    const initialViewBox = await plan.getAttribute('viewBox');
+    const planBox = await plan.boundingBox();
+    if (!planBox) throw new Error('floor plan did not render');
+    // Begin in the plan's clear top margin so the contacts target the SVG,
+    // not furniture footprints whose drag handlers intentionally stop bubbling.
+    const centerY = planBox.y + Math.min(24, planBox.height * 0.05);
+    const leftStart = planBox.x + planBox.width * 0.35;
+    const rightStart = planBox.x + planBox.width * 0.65;
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [
+        { x: leftStart, y: centerY, id: 31 },
+        { x: rightStart, y: centerY, id: 32 }
+      ]
+    });
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [
+        { x: planBox.x + planBox.width * 0.26, y: centerY - 18, id: 31 },
+        { x: planBox.x + planBox.width * 0.74, y: centerY + 18, id: 32 }
+      ]
+    });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await expect.poll(() => plan.getAttribute('viewBox')).not.toBe(initialViewBox);
+    await page.getByRole('button', { name: 'more', exact: true }).click();
+    const more = page.getByRole('dialog', { name: 'more planner tools' });
+    await more.getByRole('button', { name: 'share this plan' }).click();
+    const share = page.getByRole('dialog', { name: 'share this plan' });
+    await expect(share).toBeVisible();
+    await expectLowercaseVisibleCopy(page);
+    await share.locator('[data-sheet-close="true"]').click();
+    await page.setViewportSize({ width: 319, height: 700 });
+    await expect(page.locator('.room-name-full')).toBeHidden();
+    await expect(page.locator('.room-name-compact')).toContainText('unit 3 double');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    expect(errors).toEqual([]);
   });
-  await beginFurnitureDrag(canvas, point, 12);
-  await moveFurniture(canvas, point, 12);
-  await endFurnitureDrag(canvas, point, 12);
-  await expect(customNote).toBeVisible();
-
-  const doubleResponse = waitForModelResponse(page, DOUBLE_ID);
-  await page.getByLabel('Room').selectOption(DOUBLE_ID);
-  await doubleResponse;
-  await expect(page.locator('.topbar-title')).toHaveText('Unit 3 Standard Double — Representative');
-  await expect(customNote).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Reset layout', exact: true })).toHaveCount(0);
-  await expectUrlState(page, { room: DOUBLE_ID, mode: '3d', dims: true });
-
-  expect(browserErrors).toEqual([]);
 });

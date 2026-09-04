@@ -13,6 +13,8 @@ export type ArrangementAction =
   | { type: 'drag-start' }
   | { type: 'drag-move' }
   | { type: 'drag-end'; moved: boolean; reason: ArrangementFinishReason }
+  | { type: 'layout-command'; dirty: boolean }
+  | { type: 'sync-layout'; dirty: boolean }
   | { type: 'reset' }
   | { type: 'room-switch' };
 
@@ -40,6 +42,25 @@ export function arrangementReducer(
         isDragging: false,
         layoutDirty: state.layoutDirty || action.moved,
         arrangementRevision: state.arrangementRevision + (action.moved ? 1 : 0)
+      };
+    case 'layout-command':
+      return {
+        isDragging: false,
+        layoutDirty: action.dirty,
+        arrangementRevision: state.arrangementRevision + 1
+      };
+    case 'sync-layout':
+      // Imperative pointer movement intentionally leads the committed planner
+      // document during a drag. Reconcile only after the gesture settles, so
+      // the live honesty notice is not cleared between pointer-move and commit.
+      if (state.isDragging || state.layoutDirty === action.dirty) return state;
+      return {
+        ...state,
+        layoutDirty: action.dirty,
+        // A dirty saved/shared document did not pass through a local layout
+        // command, but still needs one presentation refresh for badges/shadows.
+        arrangementRevision:
+          state.arrangementRevision + (action.dirty && !state.layoutDirty ? 1 : 0)
       };
     case 'reset':
       return {

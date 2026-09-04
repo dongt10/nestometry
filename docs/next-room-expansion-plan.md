@@ -5,15 +5,21 @@ The current pipeline supports only Unit 3 standard double and triple representat
 ## Reusable pipeline
 
 1. Record public evidence in `packages/berkeley-data/source-ledger/`.
-2. Add a schema 0.2.0 room record under `packages/berkeley-data/halls/`.
+2. Add a schema 0.3.0 room record under `packages/berkeley-data/halls/`.
 3. Keep exact unknown axes in `room_shell`; add sourced estimated axes in `visualization_shell`.
-4. Validate the room record.
-5. Generate and optimize the Blender/GLB artifacts.
-6. Add the room to `apps/web/src/data/assetManifest.ts`.
-7. Add schema, geometry, and browser coverage.
-8. Refresh the missing-dimension, QA, and provenance records.
+4. Define the canonical `visualization_scene`: stable instance poses and roles, cameras, surfaces, openings, and advisory clearance zones.
+5. Validate the room record.
+6. Generate and optimize the Blender/GLB artifacts and derived collider manifest.
+7. Add the room and both runtime asset paths to `apps/web/src/data/assetManifest.ts`.
+8. Add schema, coordinate, collision, geometry, and browser coverage.
+9. Refresh the missing-dimension, QA, and provenance records.
 
-For each geometry axis, a usable verified `room_shell` value wins; otherwise the generator and 2D view use the corresponding `visualization_shell` estimate. Public exact-dimension labels still read only from `room_shell`.
+For each geometry axis, a usable verified `room_shell` value wins; otherwise geometry uses the corresponding `visualization_shell` estimate. Public exact-dimension labels still read only from `room_shell`. Blender, the browser's initial 3D state, and the SVG plan must use the same `visualization_scene` poses rather than adding room-specific placement branches.
+
+Every `layout_constraints[].subject` and `.object` must name a declared room
+object/group, exact scene instance, or architectural surface. Add separate
+constraints when one claim applies to multiple independently declared objects;
+do not introduce undeclared free-form aggregate names.
 
 ## Candidate sequence
 
@@ -33,7 +39,8 @@ This order is only a starting point; a well-sourced contribution can advance any
 - linked multi-space or suite shells;
 - bathroom fixtures for authorized in-suite examples;
 - explicit room-variant identifiers;
-- movable versus built-in furniture metadata; and
-- more general 2D layout projection for rooms without a dedicated canonical layout.
+- reusable parametric construction for additional furniture and fixture types;
+- multi-space scene/collider manifests; and
+- evidence-backed clearance zones for kitchens, baths, and shared circulation.
 
 Do not begin a room until its source and privacy boundaries are clear. Run `corepack pnpm verify` and the Blender regeneration checks before accepting it.

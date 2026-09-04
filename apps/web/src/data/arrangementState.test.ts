@@ -93,6 +93,52 @@ describe('arrangement presentation state', () => {
     });
   });
 
+  it('seeds one presentation refresh for a restored dirty document', () => {
+    const restored = arrangementReducer(initialArrangementState, {
+      type: 'sync-layout',
+      dirty: true
+    });
+    expect(restored).toEqual({
+      isDragging: false,
+      layoutDirty: true,
+      arrangementRevision: 1
+    });
+    expect(
+      arrangementReducer(restored, { type: 'sync-layout', dirty: true })
+    ).toBe(restored);
+  });
+
+  it('syncs an undo or restore back to canonical without another revision bump', () => {
+    const commanded = arrangementReducer(initialArrangementState, {
+      type: 'layout-command',
+      dirty: true
+    });
+    expect(arrangementReducer(commanded, { type: 'sync-layout', dirty: false })).toEqual({
+      isDragging: false,
+      layoutDirty: false,
+      arrangementRevision: 1
+    });
+  });
+
+  it('takes the computed post-command dirty value for undo and restore', () => {
+    const dirty = arrangementReducer(initialArrangementState, {
+      type: 'layout-command',
+      dirty: true
+    });
+    expect(
+      arrangementReducer(dirty, { type: 'layout-command', dirty: false })
+    ).toEqual({
+      isDragging: false,
+      layoutDirty: false,
+      arrangementRevision: 2
+    });
+  });
+
+  it('defers document reconciliation until an active drag finishes', () => {
+    const dragging = arrangementReducer(initialArrangementState, { type: 'drag-start' });
+    expect(arrangementReducer(dragging, { type: 'sync-layout', dirty: true })).toBe(dragging);
+  });
+
   it('room switching clears transient state and the room id rekeys shadows', () => {
     const oldRoom = {
       isDragging: true,

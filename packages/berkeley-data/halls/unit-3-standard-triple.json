@@ -1,5 +1,6 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
+  "room_id": "unit-3-standard-triple",
   "school": "UC Berkeley",
   "hall": "Unit 3",
   "building": null,
@@ -22,7 +23,7 @@
         "visual_reference"
       ],
       "confidence": "high",
-      "notes": "Verified live 2026-07-01. Page lists per-resident furnishings: extra-long twin bed (triples include a bunk bed & a lofted bed), desk, chair, dresser, mirror, closet, plus a Microchill refrigerator/microwave combo. No numeric dimensions stated."
+      "notes": "The current official page publishes representative Unit 3 triple views and lists per-resident furnishings: extra-long twin bed (triples include a bunk bed and a lofted bed), desk, chair, dresser, mirror, closet, plus a Microchill refrigerator/microwave combo. It states no numeric dimensions and warns that rooms vary."
     },
     {
       "id": "berkeley_facilities_drawing_request",
@@ -34,6 +35,19 @@
       ],
       "confidence": "high",
       "notes": "Process source only. No drawing dimensions have been obtained yet."
+    },
+    {
+      "id": "berkeley_housing_unit3_triple_published_3d",
+      "title": "UC Berkeley Housing — Unit 3 triple published 3D floor plan",
+      "url": "https://housing.berkeley.edu/wp-content/uploads/triple_top-225px.jpg",
+      "source_type": "official_housing_page",
+      "used_for": [
+        "layout",
+        "furniture",
+        "visual_reference"
+      ],
+      "confidence": "high",
+      "notes": "Official floor-plan image linked from the Unit 3 page. Companion entrance and interior-wall views are published at https://housing.berkeley.edu/wp-content/uploads/triple_side_01-225px.jpg and https://housing.berkeley.edu/wp-content/uploads/triple_side_03-225px.jpg. Together they define this record's canonical published-3D variant; none provides numeric measurements."
     },
     {
       "id": "unit_room_reference_photo_2026_07",
@@ -91,44 +105,451 @@
   },
   "visualization_shell": {
     "width": {
-      "value_m": 4.6,
+      "value_m": 4.115,
+      "uncertainty_m": 0.3048,
       "status": "estimated",
       "estimated": true,
       "source_id": "unit3_interior_model_pack_2026_07",
       "confidence": "medium",
-      "notes": "Visualization-only room-width estimate derived from official Unit 3 views using Twin XL scale; not a verified Berkeley measurement."
+      "notes": "Visualization-only 13 ft 6 in room-width estimate from official-view and Twin XL scale analysis, with ±12 in uncertainty; not a verified Berkeley measurement."
     },
     "depth": {
-      "value_m": 3.95,
+      "value_m": 3.505,
+      "uncertainty_m": 0.3048,
       "status": "estimated",
       "estimated": true,
       "source_id": "unit3_interior_model_pack_2026_07",
       "confidence": "medium",
-      "notes": "Visualization-only room-depth estimate derived from official Unit 3 views using Twin XL scale; not a verified Berkeley measurement."
+      "notes": "Visualization-only 11 ft 6 in entry-to-window estimate from official-view and Twin XL scale analysis, with ±12 in uncertainty; not a verified Berkeley measurement."
     },
     "height": {
-      "value_m": 2.6,
+      "value_m": 2.44,
+      "uncertainty_m": 0.3048,
       "status": "estimated",
       "estimated": true,
       "source_id": "unit3_interior_model_pack_2026_07",
       "confidence": "medium",
-      "notes": "Visualization-only room-height estimate derived from the Unit 3 interior model pack; not a verified Berkeley measurement."
+      "notes": "Visualization-only 8 ft room-height estimate from the Unit 3 interior model pack, with ±12 in uncertainty; not a verified Berkeley measurement."
     }
+  },
+  "visualization_scene": {
+    "revision": "unit-3-standard-triple-canonical-v2",
+    "coordinate_system": {
+      "units": "meters",
+      "origin": "room_center_floor",
+      "handedness": "right_handed",
+      "axes": {
+        "x": "right",
+        "y": "toward_window",
+        "z": "up"
+      }
+    },
+    "cameras": {
+      "orbit": {
+        "position_m": { "x": 5.2, "y": -5.1, "z": 4.2 },
+        "target_m": { "x": 0, "y": 0.15, "z": 1.05 },
+        "fov_deg": 42
+      },
+      "plan": {
+        "position_m": { "x": 0, "y": 0, "z": 7.5 },
+        "target_m": { "x": 0, "y": 0, "z": 0 },
+        "orthographic_size_m": 4.75
+      }
+    },
+    "surfaces": [
+      {
+        "id": "floor",
+        "kind": "floor",
+        "pose": {
+          "position_m": { "x": 0, "y": 0, "z": -0.025 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 4.115, "y": 3.505, "z": 0.05 },
+        "fade_behavior": "never",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Visualization-only floor envelope; dimensions are estimated, not measured."
+      },
+      {
+        "id": "ceiling",
+        "kind": "ceiling",
+        "pose": {
+          "position_m": { "x": 0, "y": 0, "z": 2.465 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 4.115, "y": 3.505, "z": 0.05 },
+        "fade_behavior": "smart_orbit",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Complete in walk mode; may fade in exterior orbit views."
+      },
+      {
+        "id": "wall_entry",
+        "kind": "wall",
+        "pose": {
+          "position_m": { "x": 0, "y": -1.7525, "z": 1.22 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 4.115, "y": 0.08, "z": 2.44 },
+        "fade_behavior": "smart_orbit",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Entry wall may fade only when it obstructs the main orbit view."
+      },
+      {
+        "id": "wall_window",
+        "kind": "wall",
+        "pose": {
+          "position_m": { "x": 0, "y": 1.7525, "z": 1.22 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 4.115, "y": 0.08, "z": 2.44 },
+        "fade_behavior": "never",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Exterior wall remains visible so the canonical centered window stays legible."
+      },
+      {
+        "id": "wall_left",
+        "kind": "wall",
+        "pose": {
+          "position_m": { "x": -2.0575, "y": 0, "z": 1.22 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 0.08, "y": 3.505, "z": 2.44 },
+        "fade_behavior": "smart_orbit",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Side wall may fade only when it obstructs the main orbit view."
+      },
+      {
+        "id": "wall_right",
+        "kind": "wall",
+        "pose": {
+          "position_m": { "x": 2.0575, "y": 0, "z": 1.22 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 0.08, "y": 3.505, "z": 2.44 },
+        "fade_behavior": "smart_orbit",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Side wall may fade only when it obstructs the main orbit view."
+      }
+    ],
+    "instances": [
+      {
+        "id": "door_1",
+        "object_id": "door_1",
+        "instance_index": 1,
+        "label": "Entry door",
+        "role": "built_in",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": -1.4205, "y": -1.7525, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Door at the left end of the entry wall; size and hinge arc remain estimated."
+      },
+      {
+        "id": "window_1",
+        "object_id": "window_1",
+        "instance_index": 1,
+        "label": "Exterior window",
+        "role": "built_in",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": 0, "y": 1.7525, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Centered on the exterior wall; opening size and sill height remain estimated."
+      },
+      {
+        "id": "loft_bed_1",
+        "object_id": "loft_bed_1",
+        "instance_index": 1,
+        "label": "Loft bed",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -1.4495, "y": 0.6485, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 90 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Along the left wall with its head at the window; the integrated ladder belongs at the entry-side foot end."
+      },
+      {
+        "id": "bunk_bed_1",
+        "object_id": "bunk_bed_1",
+        "instance_index": 1,
+        "label": "Bunk bed",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": 1.4495, "y": 0.6485, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 90 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Opposite the loft along the right wall with its head at the window."
+      },
+      {
+        "id": "desk_1",
+        "object_id": "desk_group",
+        "instance_index": 1,
+        "label": "Entry-side loft desk",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -1.5425, "y": 0.1253, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 90 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Entry-side half of the continuous two-desk study nook beneath the loft."
+      },
+      {
+        "id": "desk_2",
+        "object_id": "desk_group",
+        "instance_index": 2,
+        "label": "Window-side loft desk",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -1.5425, "y": 1.1718, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 90 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Window-side half of the continuous two-desk study nook beneath the loft."
+      },
+      {
+        "id": "desk_3",
+        "object_id": "desk_group",
+        "instance_index": 3,
+        "label": "Window desk",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": 0, "y": 1.285, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Third desk centered at the exterior wall and facing the window; standoff clears the estimated radiator."
+      },
+      {
+        "id": "chair_1",
+        "object_id": "chair_group",
+        "instance_index": 1,
+        "label": "Entry-side loft desk chair",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -1.2725, "y": -0.0414, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 270 }
+        },
+        "source_id": "unit_room_reference_photo_2026_07",
+        "confidence": "medium",
+        "placement_basis": "visual_scale_estimate",
+        "notes": "Representative tucked position; the ladder must remain at least 20 mm clear of the complete chair bounds."
+      },
+      {
+        "id": "chair_2",
+        "object_id": "chair_group",
+        "instance_index": 2,
+        "label": "Window-side loft desk chair",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -1.1925, "y": 1.0051, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 270 }
+        },
+        "source_id": "unit_room_reference_photo_2026_07",
+        "confidence": "medium",
+        "placement_basis": "visual_scale_estimate",
+        "notes": "Representative tucked position beneath the window-side half of the loft."
+      },
+      {
+        "id": "chair_3",
+        "object_id": "chair_group",
+        "instance_index": 3,
+        "label": "Window desk chair",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -0.1707, "y": 0.875, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "unit_room_reference_photo_2026_07",
+        "confidence": "medium",
+        "placement_basis": "visual_scale_estimate",
+        "notes": "Representative tucked position facing the third desk at the window."
+      },
+      {
+        "id": "dresser_1",
+        "object_id": "dresser_group",
+        "instance_index": 1,
+        "label": "Bunk-foot dresser",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": 1.614, "y": -0.748, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Against the right wall at the bunk foot, retaining at least 50 mm from the complete bed bounds."
+      },
+      {
+        "id": "dresser_2",
+        "object_id": "dresser_group",
+        "instance_index": 2,
+        "label": "Loft-foot dresser",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -0.75, "y": -0.72, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "medium",
+        "placement_basis": "visual_scale_estimate",
+        "notes": "Representative position at the loft foot, rotated to face the open room and kept outside the estimated door swing; the published relationship is supported but the exact offset is unverified."
+      },
+      {
+        "id": "closet_1",
+        "object_id": "closet_group",
+        "instance_index": 1,
+        "label": "Entry wardrobe",
+        "role": "built_in",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": -0.4265, "y": -1.385, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "First built-in module immediately right of the entry door."
+      },
+      {
+        "id": "closet_2",
+        "object_id": "closet_group",
+        "instance_index": 2,
+        "label": "Entry open storage",
+        "role": "built_in",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": 0.5075, "y": -1.385, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_triple_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Second entry module is rendered as open storage rather than a duplicate closed wardrobe."
+      },
+      {
+        "id": "microchill_1",
+        "object_id": "microchill_1",
+        "instance_index": 1,
+        "label": "Microchill",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": 1.2585, "y": -1.456, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3",
+        "confidence": "low",
+        "placement_basis": "representative_assumption",
+        "notes": "Representative entry-wall slot; the official list confirms a refrigerator/microwave combination but not this exact location."
+      }
+    ],
+    "clearance_zones": [
+      {
+        "id": "entry_door_swing",
+        "type": "door_swing",
+        "anchor_instance_id": "door_1",
+        "geometry": {
+          "shape": "sector",
+          "center_m": { "x": -1.8775, "y": -1.7525 },
+          "radius_m": 0.914,
+          "start_angle_deg": 0,
+          "end_angle_deg": 90
+        },
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "estimated": true,
+        "notes": "Estimated inward door swing; hinge side and exact arc require field verification."
+      },
+      {
+        "id": "central_circulation",
+        "type": "circulation",
+        "anchor_instance_id": null,
+        "geometry": {
+          "shape": "rectangle",
+          "center_m": { "x": 0, "y": 0.1 },
+          "size_m": { "width": 0.5, "depth": 0.9 },
+          "rotation_deg": 0
+        },
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "low",
+        "estimated": true,
+        "notes": "Estimated clear central strip between the opposing bed systems in the canonical staged pose; advisory only, not a verified passage width."
+      },
+      {
+        "id": "entry_circulation",
+        "type": "circulation",
+        "anchor_instance_id": null,
+        "geometry": {
+          "shape": "rectangle",
+          "center_m": { "x": -1.57, "y": -1.1 },
+          "size_m": { "width": 0.61, "depth": 1 },
+          "rotation_deg": 0
+        },
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "low",
+        "estimated": true,
+        "notes": "Estimated entry-side clear strip along the left wall in the canonical staged pose; advisory only and not a verified egress clearance."
+      }
+    ]
   },
   "layout_constraints": [
     {
-      "id": "beds-heads-at-window",
-      "description": "Loft (left side wall) and bunk (right side wall) both have their HEADS at the window wall, per the official 3D views and the official room photo (beds tight to the window).",
-      "source_id": "unit3_interior_model_pack_2026_07",
+      "id": "loft-head-at-window",
+      "description": "The loft on the left side wall has its head at the window wall, per the official 3D views and the official room photo.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
       "confidence": "high",
       "relation_type": "adjacent_to",
-      "subject": "bed_group",
+      "subject": "loft_bed_1",
+      "object": "window_1"
+    },
+    {
+      "id": "bunk-head-at-window",
+      "description": "The bunk on the right side wall has its head at the window wall, per the official 3D views and the official room photo.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
+      "confidence": "high",
+      "relation_type": "adjacent_to",
+      "subject": "bunk_bed_1",
       "object": "window_1"
     },
     {
       "id": "door-upper-left-corner",
-      "description": "Entry door sits at the upper-left corner of the entry (interior) wall; it swings inward with a clear zone in front.",
-      "source_id": "unit3_interior_model_pack_2026_07",
+      "description": "Entry door sits at the left end of the entry wall; it swings inward with an estimated clear zone in front.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
       "confidence": "high",
       "relation_type": "adjacent_to",
       "subject": "door_1",
@@ -137,7 +558,7 @@
     {
       "id": "closets-right-of-door",
       "description": "Two closet modules (wardrobe + open shelf column) are built along the entry wall to the right of the door.",
-      "source_id": "unit3_interior_model_pack_2026_07",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
       "confidence": "high",
       "relation_type": "adjacent_to",
       "subject": "closet_group",
@@ -146,7 +567,7 @@
     {
       "id": "nook-under-loft",
       "description": "Two desks form a continuous study nook under the loft; the third desk stands against the window wall facing the window.",
-      "source_id": "unit3_interior_model_pack_2026_07",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
       "confidence": "high",
       "relation_type": "under",
       "subject": "desk_group",
@@ -154,8 +575,8 @@
     },
     {
       "id": "dresser-at-bunk-foot",
-      "description": "dresser_1 stands along the entry wall right of the closets, drawers opening into the room near the bunk-foot corner; dresser_2 sits in the loft-foot corner against the left side wall, drawers to the room - the position the official view shows, kept clear of the 0.9 m door swing.",
-      "source_id": "unit3_interior_model_pack_2026_07",
+      "description": "dresser_1 stands against the right wall at the bunk foot; dresser_2 remains near the loft foot and entry but is shifted inward in the visualization to clear the estimated door swing.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
       "confidence": "medium",
       "relation_type": "near",
       "subject": "dresser_group",
@@ -163,7 +584,7 @@
     },
     {
       "id": "microchill-near-entry",
-      "description": "Microchill stands on the right wall's entry band between the closet line and the bunk's foot, door facing the open room (representative placement near the entry).",
+      "description": "Microchill uses a representative entry-wall slot to the right of the storage modules; Berkeley confirms the appliance but not this exact placement.",
       "source_id": "unit3_interior_model_pack_2026_07",
       "confidence": "medium",
       "relation_type": "near",
@@ -240,9 +661,9 @@
           "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
         }
       },
-      "position_hint": "Entry wall; exact position and swing unknown.",
-      "source_id": "berkeley_housing_unit3",
-      "confidence": "low",
+      "position_hint": "Left end of the entry wall in the canonical published example; exact offset, hinge, and swing arc remain estimated.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
+      "confidence": "high",
       "dimension_status": "estimated",
       "notes": "Placeholder standard door size. Verify with drawing or measurement."
     },
@@ -277,9 +698,9 @@
           "notes": "Estimated from official Unit 3 room photos (tall window, low sill); not a verified measurement."
         }
       },
-      "position_hint": "Exterior wall opposite entry; exact position unknown.",
-      "source_id": "berkeley_housing_unit3",
-      "confidence": "low",
+      "position_hint": "Centered on the exterior wall opposite entry in the canonical published example; exact opening size and sill height remain estimated.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
+      "confidence": "high",
       "dimension_status": "estimated",
       "notes": "Large dark-framed window per official photos; size estimated from photos, sill height estimated ~0.55 m. Verify with drawing or measurement."
     },
@@ -314,9 +735,9 @@
           "notes": "Placeholder visualization default; not a verified Berkeley measurement."
         }
       },
-      "position_hint": "Side wall; exact placement pending official layout verification.",
-      "source_id": "berkeley_housing_unit3",
-      "confidence": "medium",
+      "position_hint": "Along the left wall with the head at the window in the canonical published example.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
+      "confidence": "high",
       "dimension_status": "estimated",
       "notes": "Twin XL footprint placeholder with loft height estimate."
     },
@@ -351,9 +772,9 @@
           "notes": "Placeholder visualization default; not a verified Berkeley measurement."
         }
       },
-      "position_hint": "Opposite side wall from loft bed; exact placement pending official layout verification.",
-      "source_id": "berkeley_housing_unit3",
-      "confidence": "medium",
+      "position_hint": "Along the right wall opposite the loft, with the head at the window in the canonical published example.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
+      "confidence": "high",
       "dimension_status": "estimated",
       "notes": "Twin XL bunk footprint placeholder."
     },
@@ -364,12 +785,12 @@
       "count": 3,
       "dimensions_m": {
         "x": {
-          "value_m": 1.067,
+          "value_m": 1.0415,
           "status": "estimated",
           "estimated": true,
           "source_id": "unit3_interior_model_pack_2026_07",
           "confidence": "medium",
-          "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
+          "notes": "Visualization estimate capped to half the loft span so the canonical two-desk nook fits beneath the bed; not a verified Berkeley measurement."
         },
         "y": {
           "value_m": 0.61,
@@ -388,9 +809,9 @@
           "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
         }
       },
-      "position_hint": "Official page depiction: two desks under the lofted bed, third desk against the exterior (window) wall",
-      "source_id": "unit_room_reference_photo_2026_07",
-      "confidence": "medium",
+      "position_hint": "Canonical published example: two desks under the lofted bed and the third desk against the exterior window wall.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
+      "confidence": "high",
       "dimension_status": "estimated",
       "notes": "Desk size placeholder."
     },
@@ -462,8 +883,8 @@
           "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
         }
       },
-      "position_hint": "Official page depiction shows a dresser at the foot of the bunk bed; second near storage zone",
-      "source_id": "berkeley_housing_unit3",
+      "position_hint": "The canonical published example shows one dresser at the bunk foot and another near the loft foot/entry; exact offsets remain estimated.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
       "confidence": "medium",
       "dimension_status": "estimated",
       "notes": "Placeholder."
@@ -499,9 +920,9 @@
           "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
         }
       },
-      "position_hint": "Near entry/interior wall; exact built-in dimensions unknown.",
-      "source_id": "berkeley_housing_unit3",
-      "confidence": "medium",
+      "position_hint": "Two built-in entry modules immediately right of the door, represented as a wardrobe and open storage; exact dimensions remain estimated.",
+      "source_id": "berkeley_housing_unit3_triple_published_3d",
+      "confidence": "high",
       "dimension_status": "estimated",
       "notes": "Placeholder built-in storage."
     },
@@ -578,8 +999,8 @@
     }
   ],
   "public_notes": [
-    "Representative model only; exact room dimensions are not verified.",
-    "Furniture list confirmed against the official UC Berkeley Housing Unit 3 page on 2026-07-01: extra-long twin beds (bunk + loft in triples), desk, chair, dresser, mirror, and closet per resident, plus a shared Microchill.",
+    "Representative model only; exact room dimensions are not verified. The 4.115 × 3.505 × 2.44 m visualization shell has ±12 in uncertainty while room_shell remains unknown.",
+    "Furniture and canonical relative layout are based on Berkeley's published Unit 3 triple page and 3D views; exact furniture dimensions and some offsets remain estimated.",
     "Bathrooms are community bathrooms located on each floor, not inside the room.",
     "Rooms vary in size, layout, and furniture configuration (official UC Berkeley Housing warning)."
   ],

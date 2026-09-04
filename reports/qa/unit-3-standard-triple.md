@@ -1,30 +1,79 @@
-# Unit 3 Release-Candidate QA
+# Unit 3 Scene-Asset QA
 
-Audit date: 2026-08-10
+Audit date: 2026-09-03
 
 Scope: Unit 3 standard double and triple representative examples
 
-Status: local release candidate; not yet approved for public publication
+Status: locally regenerated and verified; no public Git action performed by this audit
 
 ## Accuracy checks
 
-- Both records validate against room schema 0.2.0.
+- Both records validate against room schema 0.3.0.
 - Exact `room_shell` width, depth, and height remain `null`/`unknown`.
-- `visualization_shell` values are sourced, medium-confidence estimates used only for geometry.
+- `visualization_shell` uses the sourced 4.115 × 3.505 × 2.44 m
+  medium-confidence estimate only for scene geometry.
 - Both records retain the official room-variation warning and `official_representative` tier.
 - The double record separates the canonical published-view layout from the different official-tour example.
-- The UI displays source, confidence, estimated/unknown dimension status, and the independent-project disclaimer.
+- The triple follows the canonical published layout: the loft and bunk oppose
+  one another, two desks sit beneath the loft, the third desk faces the window,
+  and the entry wall carries the two open storage modules and Microchill.
+- Published official views establish the canonical relationships but do not
+  establish exact room or furniture dimensions.
+
+## Scene-contract checks
+
+- Blender 5.1.1 generated both source scenes.
+- Every schema instance exports as one stable top-level root named exactly for
+  its instance ID, with all component meshes beneath it.
+- Root extras contain `instance_id`, `object_id`, room and generator scene
+  revisions, role, removable state, provenance, pose basis, semantic anchor,
+  and declared generated baseline yaw.
+- Both rooms export all 15 schema instances as stable top-level roots. The
+  double's two wall bookshelves are schema-backed `attached` roots and not
+  auxiliary top-level geometry.
+- The generator recenters every procedural assembly on a semantic local anchor
+  before assigning the exact schema pose. A temporary desk-3 regression probe
+  changed only schema position from `(0, 1.285)` to `(0.35, -0.25)` and yaw
+  from `0°` to `90°`: the visible desk-top center followed to
+  `(0.35, -0.25)`, its footprint rotated from `1.0415 × 0.61 m` to
+  `0.61 × 1.0415 m`, and the semantic anchor remained `(0, 0)` in root space.
+- The versioned local collider contract (`manifest_version: 1`) contains 15
+  double instances / 151 component
+  boxes and 15 triple instances / 174 component boxes. Boxes are expressed in
+  each root's local room-coordinate frame and the manifests bind to the
+  optimized GLBs by SHA-256.
+- The canonical planner collision suite requires the complete returned conflict
+  array to be empty for both rooms, including warnings as well as errors.
+- Regression coverage distinguishes the canonical fitted contacts at the fixed
+  door/window openings from user-moved furniture or custom blocks that overlap
+  those openings.
+- Generator regressions cover double radiator/bed, dresser/bed and
+  closet/dresser clearances; triple ladder/chair, dresser/bed and
+  Microchill/storage clearances; and floor contact for floor-standing objects.
 
 ## Artifact checks
 
 | Artifact | Bytes | SHA-256 | GLB contents |
 |---|---:|---|---|
-| `assets/glb/berkeley/unit-3-standard-double.glb` | 1,698,192 | `312047b18df3bdbf8df885edb59702822706b4b638e7b25795d05ccdd7437938` | 204 nodes, 97 meshes, 12 materials, 30 embedded WebP images |
-| `assets/glb/berkeley/unit-3-standard-triple.glb` | 1,924,120 | `b52e7c5344f13e97960abddfb5b328dd0418ac9420eeb73639947f54cc7a3f6e` | 228 nodes, 118 meshes, 13 materials, 33 embedded WebP images |
-| `assets/blend/berkeley/unit-3-standard-double.blend` | generated source | `fd2e2a1f36627959269bdd043dd388861fddccc884da4d274ea3cba7b03c9479` | packed assets; zero external libraries |
-| `assets/blend/berkeley/unit-3-standard-triple.blend` | generated source | `c1dd7eb69a7419dc6cc208048521bd64d5945f308619d285faacb30202b82d15` | packed assets; zero external libraries |
+| `assets/glb/berkeley/unit-3-standard-double.glb` | 1,762,916 | `6c4934d2ac0a8d428e7baf75035902549c4a5786afffcd3304b89cfb1d935737` | 219 nodes, 97 meshes, 12 materials, 30 embedded WebP images |
+| `assets/glb/berkeley/unit-3-standard-triple.glb` | 1,993,604 | `160774da469151298e7bf7dc7a3632775db2f0ae86bc0182f0510c495288936f` | 244 nodes, 120 meshes, 13 materials, 33 embedded WebP images |
+| `assets/blend/berkeley/unit-3-standard-double.blend` | 17,991,773 | `f3d4c95a00ede40195fee24f381117c04e259a11ce1a544278cee622cc247414` | all 37 source images packed at stable `//textures/` paths; zero external libraries, text blocks, or node groups |
+| `assets/blend/berkeley/unit-3-standard-triple.blend` | 13,682,439 | `0e9b0ee2550d0bb987a813f25c239f7ff9130bb496e386222cbb9899c9c922a4` | all 34 source images packed at stable `//textures/` paths; zero external libraries, text blocks, or node groups |
+| `assets/colliders/berkeley/unit-3-standard-double.colliders.json` | 44,608 | `145511e31d675643bb2ea5c43a48817673eac8e2fe62a005fa4558412dad06d7` | manifest v1; 15 schema roots / 151 root-local boxes; optimized asset hash present |
+| `assets/colliders/berkeley/unit-3-standard-triple.colliders.json` | 51,404 | `6c2a678f611b64cf6b765dbd71ac8abbddb65b19877aa22663b263475cab2c30` | manifest v1; 15 schema roots / 174 root-local boxes; optimized asset hash present |
 
-Both GLBs have zero external URIs. Each source GLB is byte-identical to its copy under `apps/web/public/models/berkeley/`. The embedded images are procedural textures generated by the checked-in Python source; they are not copied reference images.
+Both GLBs have zero external URIs. Each source GLB and collider manifest is
+byte-identical to its copy under `apps/web/public/models/berkeley/`. Every
+source texture in the Blender files is packed and uses a stable virtual
+`//textures/` path, so no workstation temporary path is embedded. The
+embedded images are procedural textures generated by the checked-in Python
+source; they are not copied reference images. Standardized top,
+official-layout, perspective, free-orbit, and low contact-angle renders for
+both rooms were inspected locally under `/tmp/nestometry-model-qa/` and are
+intentionally not release artifacts. Blender bounds report `0.0025 m` minimum
+Z for all ordinary floor-standing roots and `0.000837 m` for the loft/bunk
+assemblies because their angled ladders make the closest contact; attached
+bookshelves and window assemblies are intentionally elevated.
 
 ## Reproducible application gate
 
@@ -41,18 +90,20 @@ corepack pnpm test:e2e
 
 The browser tests load both rooms, check console cleanliness, switch view modes, verify URL state, exercise arrange/reset/room-switch cleanup, and assert the baseline response-security headers.
 
+## Interactive performance gate
+
+The headed Chromium acceptance benchmark was rerun on 2026-09-03 against the
+production build at 1280 × 720 on the Apple M5 Pro Metal renderer. During a
+continuous ten-second 3D custom-block drag it measured 120.5 median FPS,
+8.4 ms p95 frame time, and zero one-second buckets below 45 FPS. Its controlled
+automatic-quality probe reduced canvas DPR from 1.5 to 1.0, held that profile
+for all eight follow-up samples, remained interactive, and produced no browser
+errors.
+
 ## Known limitations
 
 - Geometry is representative and must not be used for fit-critical or assigned-room decisions.
-- The Unit 3 triple layout is less directly documented than the published double example.
-- Furniture arrangements are session-only and do not perform collision or fit guarantees.
-- The public branch is prepared as a clean root snapshot. The prior binary-heavy development history remains on a local-only archival branch and must not be pushed.
-
-## Publication gates still requiring owner approval
-
-- Keep the MIT license and its README link present in release snapshots.
-- Decide whether to retain or rewrite/squash the pre-public Git history.
-- Set an intentional GitHub-linked or noreply author email before committing.
-- Confirm the conservative neutral branding or obtain any desired institutional name-use authorization.
+- Exact dimensions, assigned-room variants, and furniture availability remain unverified.
+- Detailed box colliders are planning aids, not physical fit or safety guarantees.
 
 This report is technical QA, not legal advice.

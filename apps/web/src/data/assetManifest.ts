@@ -19,24 +19,27 @@ export type RoomManifestItem = {
   hall: string;
   roomType: string;
   glbPath: string;
+  colliderPath: string;
   room: Room;
 };
 
 export const roomManifest: RoomManifestItem[] = [
   {
-    id: 'unit-3-standard-triple',
+    id: triple.room_id,
     displayName: triple.display_name,
     hall: triple.hall,
     roomType: triple.room_type,
     glbPath: '/models/berkeley/unit-3-standard-triple.glb',
+    colliderPath: '/models/berkeley/unit-3-standard-triple.colliders.json',
     room: triple
   },
   {
-    id: 'unit-3-standard-double',
+    id: double.room_id,
     displayName: double.display_name,
     hall: double.hall,
     roomType: double.room_type,
     glbPath: '/models/berkeley/unit-3-standard-double.glb',
+    colliderPath: '/models/berkeley/unit-3-standard-double.colliders.json',
     room: double
   }
 ];

@@ -34,6 +34,15 @@ const binaryExtensions = new Set([
 ]);
 const maximumFileBytes = 95 * 1024 * 1024;
 
+for (const screenshot of [
+  'docs/images/nestometry-planner-desktop.png',
+  'docs/images/nestometry-planner-mobile.png'
+]) {
+  if (!fs.existsSync(path.join(repoRoot, screenshot))) {
+    failures.push(`${screenshot}: required README preview is missing`);
+  }
+}
+
 const privatePathMarkers = [
   '/Us' + 'ers/',
   '/private/' + 'tmp/',
@@ -107,6 +116,61 @@ for (const modelName of modelNames) {
 
   const hash = crypto.createHash('sha256').update(source).digest('hex');
   console.log(`${modelName}: ${source.length} bytes, sha256 ${hash}`);
+
+  const colliderName = modelName.replace(/\.glb$/u, '.colliders.json');
+  const colliderSourcePath = path.join(repoRoot, 'assets/colliders/berkeley', colliderName);
+  const colliderPublicPath = path.join(repoRoot, 'apps/web/public/models/berkeley', colliderName);
+  const colliderSource = fs.readFileSync(colliderSourcePath);
+  const colliderPublicCopy = fs.readFileSync(colliderPublicPath);
+  if (!colliderSource.equals(colliderPublicCopy)) {
+    failures.push(`${colliderName}: source and public collider manifest copies differ`);
+  }
+  try {
+    const collider = JSON.parse(colliderSource.toString('utf8'));
+    if (collider.manifest_version !== 1) {
+      failures.push(`${colliderName}: unsupported or missing manifest_version`);
+    }
+    if (collider.asset_sha256 !== hash) {
+      failures.push(`${colliderName}: asset hash does not match ${modelName}`);
+    }
+    if (!Array.isArray(collider.instances) || collider.instances.length === 0) {
+      failures.push(`${colliderName}: has no instance colliders`);
+    } else {
+      const roomRecordPath = path.join(
+        repoRoot,
+        'packages/berkeley-data/halls',
+        modelName.replace(/\.glb$/u, '.json')
+      );
+      const roomRecord = JSON.parse(fs.readFileSync(roomRecordPath, 'utf8'));
+      if (
+        collider.room_id !== roomRecord.room_id ||
+        collider.scene_revision !== roomRecord.visualization_scene?.revision
+      ) {
+        failures.push(`${colliderName}: room or scene revision does not match its room record`);
+      }
+      const expectedIds = roomRecord.visualization_scene.instances
+        .map((instance) => instance.id)
+        .sort();
+      const actualIds = collider.instances.map((instance) => instance.instance_id).sort();
+      if (JSON.stringify(actualIds) !== JSON.stringify(expectedIds)) {
+        failures.push(`${colliderName}: instance ids do not exactly match visualization_scene`);
+      }
+      if (collider.instances.some((instance) =>
+        !Array.isArray(instance.colliders) ||
+        instance.colliders.length === 0 ||
+        instance.colliders.some((box) =>
+          !box.size_m ||
+          ![box.size_m.width, box.size_m.depth, box.size_m.height].every(
+            (value) => Number.isFinite(value) && value > 0
+          )
+        )
+      )) {
+        failures.push(`${colliderName}: contains an invalid or empty collider set`);
+      }
+    }
+  } catch {
+    failures.push(`${colliderName}: is not valid JSON`);
+  }
 }
 
 if (failures.length > 0) {

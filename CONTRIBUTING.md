@@ -9,7 +9,7 @@ You do not need Blender or Three.js experience to help. Useful contributions inc
 - finding and documenting public, authoritative room sources;
 - recording permitted measurements with clear provenance;
 - adding a residence-hall, apartment, room, or layout variant;
-- improving room data, the procedural generator, or the 2D and 3D viewer;
+- improving room data, the procedural generator, or the shared 2D and 3D planner;
 - improving accessibility, performance, automated tests, documentation, or QA; and
 - reporting an inaccuracy, missing source, confusing interaction, or useful feature request.
 
@@ -27,6 +27,10 @@ Do not submit:
 - scraped virtual-tour assets, copied panoramas, meshes, or textures; or
 - material you do not have the right to share.
 
+Room records are bundled into the public web client in full. Treat every field,
+including the legacy-named `internal_notes`, as public; keep private research or
+maintainer context outside tracked room JSON.
+
 ## Accuracy corrections
 
 Open an accuracy-correction issue with a public source URL, access date, the exact observed fact, and the affected room or object. Clearly separate facts from estimates. A different valid room configuration is a variant, not proof that every other example is wrong.
@@ -42,7 +46,10 @@ corepack pnpm exec playwright install chromium
 corepack pnpm verify
 ```
 
-When changing generated geometry, also rebuild the affected room with Blender 5.1.1, validate the model, and confirm that the source and public GLBs are byte-identical.
+When changing generated geometry, also rebuild the affected room with Blender
+5.1.1, validate the model, and confirm that the source/public GLBs and collider
+manifests are byte-identical. Inspect the editable `.blend` for packed images,
+zero linked libraries or text blocks, and stable virtual texture paths.
 
 ## Change discipline
 

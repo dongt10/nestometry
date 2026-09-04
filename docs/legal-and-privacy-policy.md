@@ -61,4 +61,14 @@ Unknown exact values stay unknown. Estimated visualization geometry is not a fit
 
 ## Application privacy
 
-The checked-in viewer does not implement accounts, analytics, advertising, uploads, or client-side tracking. A deployment host may retain ordinary request logs under its own policy; document that host separately when deploying.
+The checked-in planner does not implement accounts, analytics, advertising,
+uploads, or client-side tracking. It stores compatible per-room plans and UI
+preferences in browser local storage. An explicit share link places a bounded,
+compressed plan in the URL fragment, which browsers do not send in ordinary
+HTTP requests. The fragment is not secret: anyone with the link can decode and
+edit its layout and custom labels, and browser sync/history, clipboards, link
+previews, or messaging services may retain the URL. Do not enter personal or
+sensitive information in planner labels.
+
+A deployment host may retain ordinary request logs under its own policy;
+document that host separately when deploying.

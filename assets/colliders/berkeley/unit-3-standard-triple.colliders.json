@@ -1,0 +1,2345 @@
+{
+  "asset_sha256": "160774da469151298e7bf7dc7a3632775db2f0ae86bc0182f0510c495288936f",
+  "instances": [
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0.31245,
+            "y": 0.488,
+            "z": 1.515
+          },
+          "id": "bunk_bed_1_guardrail",
+          "size_m": {
+            "depth": 0.04,
+            "height": 0.15,
+            "width": 1.14565
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": 0.781532,
+            "z": 0.25875
+          },
+          "id": "bunk_bed_1_ladder_rung_1",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": 0.727065,
+            "z": 0.515
+          },
+          "id": "bunk_bed_1_ladder_rung_2",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": 0.672597,
+            "z": 0.77125
+          },
+          "id": "bunk_bed_1_ladder_rung_3",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": 0.618129,
+            "z": 1.0275
+          },
+          "id": "bunk_bed_1_ladder_rung_4",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": 0.563662,
+            "z": 1.28375
+          },
+          "id": "bunk_bed_1_ladder_rung_5",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.8615,
+            "y": 0.672597,
+            "z": 0.77125
+          },
+          "id": "bunk_bed_1_ladder_stile_-1",
+          "size_m": {
+            "depth": 0.351699,
+            "height": 1.540827,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.4215,
+            "y": 0.672597,
+            "z": 0.77125
+          },
+          "id": "bunk_bed_1_ladder_stile_1",
+          "size_m": {
+            "depth": 0.351699,
+            "height": 1.540827,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": -1.0165,
+            "y": 0,
+            "z": 0.31
+          },
+          "id": "bunk_bed_1_lower_fascia_foot",
+          "size_m": {
+            "depth": 1.016,
+            "height": 0.22,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 1.0165,
+            "y": 0,
+            "z": 0.31
+          },
+          "id": "bunk_bed_1_lower_fascia_head",
+          "size_m": {
+            "depth": 1.016,
+            "height": 0.22,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.483,
+            "z": 0.31
+          },
+          "id": "bunk_bed_1_lower_fascia_side_-1",
+          "size_m": {
+            "depth": 0.05,
+            "height": 0.22,
+            "width": 2.083
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.483,
+            "z": 0.31
+          },
+          "id": "bunk_bed_1_lower_fascia_side_1",
+          "size_m": {
+            "depth": 0.05,
+            "height": 0.22,
+            "width": 2.083
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.4225
+          },
+          "id": "bunk_bed_1_lower_mattress",
+          "size_m": {
+            "depth": 0.87456,
+            "height": 0.16,
+            "width": 1.85932
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.315
+          },
+          "id": "bunk_bed_1_lower_platform",
+          "size_m": {
+            "depth": 1.016,
+            "height": 0.05,
+            "width": 2.083
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.9965,
+            "y": 0.463,
+            "z": 0.98625
+          },
+          "id": "bunk_bed_1_post_-1_-1",
+          "size_m": {
+            "depth": 0.09,
+            "height": 1.9675,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.9965,
+            "y": 0.463,
+            "z": 0.98625
+          },
+          "id": "bunk_bed_1_post_-1_1",
+          "size_m": {
+            "depth": 0.09,
+            "height": 1.9675,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.9965,
+            "y": -0.463,
+            "z": 0.98625
+          },
+          "id": "bunk_bed_1_post_1_-1",
+          "size_m": {
+            "depth": 0.09,
+            "height": 1.9675,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.9965,
+            "y": -0.463,
+            "z": 0.98625
+          },
+          "id": "bunk_bed_1_post_1_1",
+          "size_m": {
+            "depth": 0.09,
+            "height": 1.9675,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": -1.0165,
+            "y": 0,
+            "z": 1.31
+          },
+          "id": "bunk_bed_1_upper_fascia_foot",
+          "size_m": {
+            "depth": 1.016,
+            "height": 0.22,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 1.0165,
+            "y": 0,
+            "z": 1.31
+          },
+          "id": "bunk_bed_1_upper_fascia_head",
+          "size_m": {
+            "depth": 1.016,
+            "height": 0.22,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.483,
+            "z": 1.31
+          },
+          "id": "bunk_bed_1_upper_fascia_side_-1",
+          "size_m": {
+            "depth": 0.05,
+            "height": 0.22,
+            "width": 2.083
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.483,
+            "z": 1.31
+          },
+          "id": "bunk_bed_1_upper_fascia_side_1",
+          "size_m": {
+            "depth": 0.05,
+            "height": 0.22,
+            "width": 2.083
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.4225
+          },
+          "id": "bunk_bed_1_upper_mattress",
+          "size_m": {
+            "depth": 0.87456,
+            "height": 0.16,
+            "width": 1.85932
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.315
+          },
+          "id": "bunk_bed_1_upper_platform",
+          "size_m": {
+            "depth": 1.016,
+            "height": 0.05,
+            "width": 2.083
+          }
+        }
+      ],
+      "instance_id": "bunk_bed_1"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.195,
+            "z": 0.562
+          },
+          "id": "chair_1_backbar",
+          "size_m": {
+            "depth": 0.04,
+            "height": 0.14,
+            "width": 0.135
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.215,
+            "z": 0.736
+          },
+          "id": "chair_1_backrest",
+          "size_m": {
+            "depth": 0.075678,
+            "height": 0.227173,
+            "width": 0.414
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.117,
+            "z": 0.0435
+          },
+          "id": "chair_1_base_spoke_1",
+          "size_m": {
+            "depth": 0.234,
+            "height": 0.022,
+            "width": 0.028
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.111274,
+            "y": 0.036155,
+            "z": 0.0435
+          },
+          "id": "chair_1_base_spoke_2",
+          "size_m": {
+            "depth": 0.096467,
+            "height": 0.022,
+            "width": 0.228728
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.068771,
+            "y": -0.094655,
+            "z": 0.0435
+          },
+          "id": "chair_1_base_spoke_3",
+          "size_m": {
+            "depth": 0.202495,
+            "height": 0.022,
+            "width": 0.156921
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.068771,
+            "y": -0.094655,
+            "z": 0.0435
+          },
+          "id": "chair_1_base_spoke_4",
+          "size_m": {
+            "depth": 0.202495,
+            "height": 0.022,
+            "width": 0.156921
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.111274,
+            "y": 0.036155,
+            "z": 0.0435
+          },
+          "id": "chair_1_base_spoke_5",
+          "size_m": {
+            "depth": 0.096467,
+            "height": 0.022,
+            "width": 0.228728
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.21528,
+            "z": 0.0245
+          },
+          "id": "chair_1_caster_1",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.204743,
+            "y": 0.066525,
+            "z": 0.0245
+          },
+          "id": "chair_1_caster_2",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.126538,
+            "y": -0.174165,
+            "z": 0.0245
+          },
+          "id": "chair_1_caster_3",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.126538,
+            "y": -0.174165,
+            "z": 0.0245
+          },
+          "id": "chair_1_caster_4",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.204743,
+            "y": 0.066525,
+            "z": 0.0245
+          },
+          "id": "chair_1_caster_5",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.24825
+          },
+          "id": "chair_1_gaslift",
+          "size_m": {
+            "depth": 0.054596,
+            "height": 0.3875,
+            "width": 0.056
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.472
+          },
+          "id": "chair_1_seat",
+          "size_m": {
+            "depth": 0.45,
+            "height": 0.06,
+            "width": 0.45
+          }
+        }
+      ],
+      "instance_id": "chair_1"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.195,
+            "z": 0.562
+          },
+          "id": "chair_2_backbar",
+          "size_m": {
+            "depth": 0.04,
+            "height": 0.14,
+            "width": 0.135
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.215,
+            "z": 0.736
+          },
+          "id": "chair_2_backrest",
+          "size_m": {
+            "depth": 0.075678,
+            "height": 0.227173,
+            "width": 0.414
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.117,
+            "z": 0.0435
+          },
+          "id": "chair_2_base_spoke_1",
+          "size_m": {
+            "depth": 0.234,
+            "height": 0.022,
+            "width": 0.028
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.111274,
+            "y": 0.036155,
+            "z": 0.0435
+          },
+          "id": "chair_2_base_spoke_2",
+          "size_m": {
+            "depth": 0.096467,
+            "height": 0.022,
+            "width": 0.228728
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.068771,
+            "y": -0.094655,
+            "z": 0.0435
+          },
+          "id": "chair_2_base_spoke_3",
+          "size_m": {
+            "depth": 0.202495,
+            "height": 0.022,
+            "width": 0.156921
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.068771,
+            "y": -0.094655,
+            "z": 0.0435
+          },
+          "id": "chair_2_base_spoke_4",
+          "size_m": {
+            "depth": 0.202495,
+            "height": 0.022,
+            "width": 0.156921
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.111274,
+            "y": 0.036155,
+            "z": 0.0435
+          },
+          "id": "chair_2_base_spoke_5",
+          "size_m": {
+            "depth": 0.096468,
+            "height": 0.022,
+            "width": 0.228728
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.21528,
+            "z": 0.0245
+          },
+          "id": "chair_2_caster_1",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.204743,
+            "y": 0.066525,
+            "z": 0.0245
+          },
+          "id": "chair_2_caster_2",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.126538,
+            "y": -0.174165,
+            "z": 0.0245
+          },
+          "id": "chair_2_caster_3",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.126538,
+            "y": -0.174165,
+            "z": 0.0245
+          },
+          "id": "chair_2_caster_4",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.204743,
+            "y": 0.066525,
+            "z": 0.0245
+          },
+          "id": "chair_2_caster_5",
+          "size_m": {
+            "depth": 0.044,
+            "height": 0.044,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.24825
+          },
+          "id": "chair_2_gaslift",
+          "size_m": {
+            "depth": 0.054596,
+            "height": 0.3875,
+            "width": 0.056
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.472
+          },
+          "id": "chair_2_seat",
+          "size_m": {
+            "depth": 0.45,
+            "height": 0.06,
+            "width": 0.45
+          }
+        }
+      ],
+      "instance_id": "chair_2"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.195,
+            "z": 0.562
+          },
+          "id": "chair_3_backbar",
+          "size_m": {
+            "depth": 0.04,
+            "height": 0.14,
+            "width": 0.135
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.215,
+            "z": 0.736
+          },
+          "id": "chair_3_backrest",
+          "size_m": {
+            "depth": 0.075678,
+            "height": 0.227173,
+            "width": 0.414
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.117,
+            "y": 0,
+            "z": 0.0435
+          },
+          "id": "chair_3_base_spoke_1",
+          "size_m": {
+            "depth": 0.028,
+            "height": 0.022,
+            "width": 0.234
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.036155,
+            "y": 0.111274,
+            "z": 0.0435
+          },
+          "id": "chair_3_base_spoke_2",
+          "size_m": {
+            "depth": 0.228728,
+            "height": 0.022,
+            "width": 0.096467
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.094655,
+            "y": 0.068771,
+            "z": 0.0435
+          },
+          "id": "chair_3_base_spoke_3",
+          "size_m": {
+            "depth": 0.156921,
+            "height": 0.022,
+            "width": 0.202495
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.094655,
+            "y": -0.068771,
+            "z": 0.0435
+          },
+          "id": "chair_3_base_spoke_4",
+          "size_m": {
+            "depth": 0.156921,
+            "height": 0.022,
+            "width": 0.202495
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.036155,
+            "y": -0.111274,
+            "z": 0.0435
+          },
+          "id": "chair_3_base_spoke_5",
+          "size_m": {
+            "depth": 0.228728,
+            "height": 0.022,
+            "width": 0.096467
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.21528,
+            "y": 0,
+            "z": 0.0245
+          },
+          "id": "chair_3_caster_1",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.044,
+            "width": 0.044
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.066525,
+            "y": 0.204744,
+            "z": 0.0245
+          },
+          "id": "chair_3_caster_2",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.044,
+            "width": 0.044
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.174165,
+            "y": 0.126538,
+            "z": 0.0245
+          },
+          "id": "chair_3_caster_3",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.044,
+            "width": 0.044
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.174165,
+            "y": -0.126538,
+            "z": 0.0245
+          },
+          "id": "chair_3_caster_4",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.044,
+            "width": 0.044
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.066525,
+            "y": -0.204743,
+            "z": 0.0245
+          },
+          "id": "chair_3_caster_5",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.044,
+            "width": 0.044
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.24825
+          },
+          "id": "chair_3_gaslift",
+          "size_m": {
+            "depth": 0.056,
+            "height": 0.3875,
+            "width": 0.054596
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.472
+          },
+          "id": "chair_3_seat",
+          "size_m": {
+            "depth": 0.45,
+            "height": 0.06,
+            "width": 0.45
+          }
+        }
+      ],
+      "instance_id": "chair_3"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.285,
+            "z": 1.023
+          },
+          "id": "closet_1_alcove_back",
+          "size_m": {
+            "depth": 0.04,
+            "height": 1.921,
+            "width": 0.834
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.437,
+            "y": 0,
+            "z": 1.023
+          },
+          "id": "closet_1_alcove_left",
+          "size_m": {
+            "depth": 0.61,
+            "height": 1.921,
+            "width": 0.04
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.437,
+            "y": 0,
+            "z": 1.023
+          },
+          "id": "closet_1_alcove_right",
+          "size_m": {
+            "depth": 0.61,
+            "height": 1.921,
+            "width": 0.04
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.9635
+          },
+          "id": "closet_1_alcove_top",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.04,
+            "width": 0.834
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.1098,
+            "z": 1.54
+          },
+          "id": "closet_1_hanging_rod",
+          "size_m": {
+            "depth": 0.028,
+            "height": 0.027298,
+            "width": 0.734
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.0325
+          },
+          "id": "closet_1_kick",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.06,
+            "width": 0.914
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.7
+          },
+          "id": "closet_1_upper_shelf",
+          "size_m": {
+            "depth": 0.53,
+            "height": 0.025,
+            "width": 0.804
+          }
+        }
+      ],
+      "instance_id": "closet_1"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.285,
+            "z": 1.023
+          },
+          "id": "closet_2_alcove_back",
+          "size_m": {
+            "depth": 0.04,
+            "height": 1.921,
+            "width": 0.834
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.437,
+            "y": 0,
+            "z": 1.023
+          },
+          "id": "closet_2_alcove_left",
+          "size_m": {
+            "depth": 0.61,
+            "height": 1.921,
+            "width": 0.04
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.437,
+            "y": 0,
+            "z": 1.023
+          },
+          "id": "closet_2_alcove_right",
+          "size_m": {
+            "depth": 0.61,
+            "height": 1.921,
+            "width": 0.04
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.9635
+          },
+          "id": "closet_2_alcove_top",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.04,
+            "width": 0.834
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.1098,
+            "z": 1.54
+          },
+          "id": "closet_2_hanging_rod",
+          "size_m": {
+            "depth": 0.028,
+            "height": 0.027298,
+            "width": 0.734
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.0325
+          },
+          "id": "closet_2_kick",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.06,
+            "width": 0.914
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.7
+          },
+          "id": "closet_2_upper_shelf",
+          "size_m": {
+            "depth": 0.53,
+            "height": 0.025,
+            "width": 0.804
+          }
+        }
+      ],
+      "instance_id": "closet_2"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.295,
+            "z": 0.140333
+          },
+          "id": "desk_1_drawer_1_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.208667,
+            "width": 0.30328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.3175,
+            "z": 0.140333
+          },
+          "id": "desk_1_drawer_1_handle",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.014,
+            "width": 0.16664
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.295,
+            "z": 0.361
+          },
+          "id": "desk_1_drawer_2_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.208667,
+            "width": 0.30328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.3175,
+            "z": 0.361
+          },
+          "id": "desk_1_drawer_2_handle",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.014,
+            "width": 0.16664
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.295,
+            "z": 0.581667
+          },
+          "id": "desk_1_drawer_3_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.208667,
+            "width": 0.30328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.3175,
+            "z": 0.581667
+          },
+          "id": "desk_1_drawer_3_handle",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.014,
+            "width": 0.16664
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": 0,
+            "z": 0.3535
+          },
+          "id": "desk_1_drawer_carcass",
+          "size_m": {
+            "depth": 0.57,
+            "height": 0.702,
+            "width": 0.33328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.285,
+            "z": 1.061
+          },
+          "id": "desk_1_hutch_back",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.593,
+            "width": 1.0415
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.155,
+            "z": 1.061
+          },
+          "id": "desk_1_hutch_shelf",
+          "size_m": {
+            "depth": 0.28,
+            "height": 0.018,
+            "width": 1.0315
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.50575,
+            "y": 0.155,
+            "z": 1.061
+          },
+          "id": "desk_1_hutch_side_outer",
+          "size_m": {
+            "depth": 0.3,
+            "height": 0.593,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.155,
+            "z": 1.3475
+          },
+          "id": "desk_1_hutch_top",
+          "size_m": {
+            "depth": 0.3,
+            "height": 0.02,
+            "width": 1.0415
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.285,
+            "z": 0.3166
+          },
+          "id": "desk_1_modesty",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.4332,
+            "width": 0.9815
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.50575,
+            "y": 0,
+            "z": 0.36225
+          },
+          "id": "desk_1_side_-1",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.7195,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.50575,
+            "y": 0,
+            "z": 0.36225
+          },
+          "id": "desk_1_side_1",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.7195,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.742
+          },
+          "id": "desk_1_top",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.04,
+            "width": 1.0415
+          }
+        }
+      ],
+      "instance_id": "desk_1"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.295,
+            "z": 0.140333
+          },
+          "id": "desk_2_drawer_1_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.208667,
+            "width": 0.30328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.3175,
+            "z": 0.140333
+          },
+          "id": "desk_2_drawer_1_handle",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.014,
+            "width": 0.16664
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.295,
+            "z": 0.361
+          },
+          "id": "desk_2_drawer_2_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.208667,
+            "width": 0.30328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.3175,
+            "z": 0.361
+          },
+          "id": "desk_2_drawer_2_handle",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.014,
+            "width": 0.16664
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.295,
+            "z": 0.581667
+          },
+          "id": "desk_2_drawer_3_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.208667,
+            "width": 0.30328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.3175,
+            "z": 0.581667
+          },
+          "id": "desk_2_drawer_3_handle",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.014,
+            "width": 0.16664
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": 0,
+            "z": 0.3535
+          },
+          "id": "desk_2_drawer_carcass",
+          "size_m": {
+            "depth": 0.57,
+            "height": 0.702,
+            "width": 0.33328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.285,
+            "z": 1.061
+          },
+          "id": "desk_2_hutch_back",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.593,
+            "width": 1.0415
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.155,
+            "z": 1.061
+          },
+          "id": "desk_2_hutch_shelf",
+          "size_m": {
+            "depth": 0.28,
+            "height": 0.018,
+            "width": 1.0315
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.50575,
+            "y": 0.155,
+            "z": 1.061
+          },
+          "id": "desk_2_hutch_side_outer",
+          "size_m": {
+            "depth": 0.3,
+            "height": 0.593,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.155,
+            "z": 1.3475
+          },
+          "id": "desk_2_hutch_top",
+          "size_m": {
+            "depth": 0.3,
+            "height": 0.02,
+            "width": 1.0415
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.285,
+            "z": 0.3166
+          },
+          "id": "desk_2_modesty",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.4332,
+            "width": 0.9815
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.50575,
+            "y": 0,
+            "z": 0.36225
+          },
+          "id": "desk_2_side_-1",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.7195,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.50575,
+            "y": 0,
+            "z": 0.36225
+          },
+          "id": "desk_2_side_1",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.7195,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.742
+          },
+          "id": "desk_2_top",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.04,
+            "width": 1.0415
+          }
+        }
+      ],
+      "instance_id": "desk_2"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.295,
+            "z": 0.140333
+          },
+          "id": "desk_3_drawer_1_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.208667,
+            "width": 0.30328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.3175,
+            "z": 0.140333
+          },
+          "id": "desk_3_drawer_1_handle",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.014,
+            "width": 0.16664
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.295,
+            "z": 0.361
+          },
+          "id": "desk_3_drawer_2_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.208667,
+            "width": 0.30328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.3175,
+            "z": 0.361
+          },
+          "id": "desk_3_drawer_2_handle",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.014,
+            "width": 0.16664
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.295,
+            "z": 0.581667
+          },
+          "id": "desk_3_drawer_3_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.208667,
+            "width": 0.30328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": -0.3175,
+            "z": 0.581667
+          },
+          "id": "desk_3_drawer_3_handle",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.014,
+            "width": 0.16664
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.32411,
+            "y": 0,
+            "z": 0.3535
+          },
+          "id": "desk_3_drawer_carcass",
+          "size_m": {
+            "depth": 0.57,
+            "height": 0.702,
+            "width": 0.33328
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.285,
+            "z": 0.3166
+          },
+          "id": "desk_3_modesty",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.4332,
+            "width": 0.9815
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.50575,
+            "y": 0,
+            "z": 0.36225
+          },
+          "id": "desk_3_side_-1",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.7195,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.50575,
+            "y": 0,
+            "z": 0.36225
+          },
+          "id": "desk_3_side_1",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.7195,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.742
+          },
+          "id": "desk_3_top",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.04,
+            "width": 1.0415
+          }
+        }
+      ],
+      "instance_id": "desk_3"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": -0.482,
+            "y": -0.005,
+            "z": 1.01725
+          },
+          "id": "door_1_casing_left",
+          "size_m": {
+            "depth": 0.05,
+            "height": 2.0295,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.482,
+            "y": -0.005,
+            "z": 1.01725
+          },
+          "id": "door_1_casing_right",
+          "size_m": {
+            "depth": 0.05,
+            "height": 2.0295,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.005,
+            "z": 2.057
+          },
+          "id": "door_1_casing_top",
+          "size_m": {
+            "depth": 0.05,
+            "height": 0.05,
+            "width": 1.014
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.357,
+            "y": 0.085,
+            "z": 0.9144
+          },
+          "id": "door_1_handle",
+          "size_m": {
+            "depth": 0.06,
+            "height": 0.06,
+            "width": 0.06
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.016
+          },
+          "id": "door_1_leaf",
+          "size_m": {
+            "depth": 0.04,
+            "height": 1.992,
+            "width": 0.874
+          }
+        }
+      ],
+      "instance_id": "door_1"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.4135
+          },
+          "id": "dresser_1_carcass",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.702,
+            "width": 0.762
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.3,
+            "z": 0.1845
+          },
+          "id": "dresser_1_drawer_1_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.214,
+            "width": 0.732
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.3175,
+            "z": 0.1845
+          },
+          "id": "dresser_1_drawer_1_knob",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.036,
+            "width": 0.036
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.3,
+            "z": 0.4135
+          },
+          "id": "dresser_1_drawer_2_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.214,
+            "width": 0.732
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.3175,
+            "z": 0.4135
+          },
+          "id": "dresser_1_drawer_2_knob",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.036,
+            "width": 0.036
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.3,
+            "z": 0.6425
+          },
+          "id": "dresser_1_drawer_3_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.214,
+            "width": 0.732
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.3175,
+            "z": 0.6425
+          },
+          "id": "dresser_1_drawer_3_knob",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.036,
+            "width": 0.036
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.0325
+          },
+          "id": "dresser_1_kick",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.06,
+            "width": 0.762
+          }
+        }
+      ],
+      "instance_id": "dresser_1"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.4135
+          },
+          "id": "dresser_2_carcass",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.702,
+            "width": 0.762
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.3,
+            "z": 0.1845
+          },
+          "id": "dresser_2_drawer_1_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.214,
+            "width": 0.732
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.3175,
+            "z": 0.1845
+          },
+          "id": "dresser_2_drawer_1_knob",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.036,
+            "width": 0.036
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.3,
+            "z": 0.4135
+          },
+          "id": "dresser_2_drawer_2_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.214,
+            "width": 0.732
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.3175,
+            "z": 0.4135
+          },
+          "id": "dresser_2_drawer_2_knob",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.036,
+            "width": 0.036
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.3,
+            "z": 0.6425
+          },
+          "id": "dresser_2_drawer_3_front",
+          "size_m": {
+            "depth": 0.02,
+            "height": 0.214,
+            "width": 0.732
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.3175,
+            "z": 0.6425
+          },
+          "id": "dresser_2_drawer_3_knob",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.036,
+            "width": 0.036
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.0325
+          },
+          "id": "dresser_2_kick",
+          "size_m": {
+            "depth": 0.61,
+            "height": 0.06,
+            "width": 0.762
+          }
+        }
+      ],
+      "instance_id": "dresser_2"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": -1.0165,
+            "y": 0,
+            "z": 1.47
+          },
+          "id": "loft_bed_1_fascia_foot",
+          "size_m": {
+            "depth": 1.016,
+            "height": 0.22,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 1.0165,
+            "y": 0,
+            "z": 1.47
+          },
+          "id": "loft_bed_1_fascia_head",
+          "size_m": {
+            "depth": 1.016,
+            "height": 0.22,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.483,
+            "z": 1.47
+          },
+          "id": "loft_bed_1_fascia_side_-1",
+          "size_m": {
+            "depth": 0.05,
+            "height": 0.22,
+            "width": 2.083
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.483,
+            "z": 1.47
+          },
+          "id": "loft_bed_1_fascia_side_1",
+          "size_m": {
+            "depth": 0.05,
+            "height": 0.22,
+            "width": 2.083
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.31245,
+            "y": -0.488,
+            "z": 1.675
+          },
+          "id": "loft_bed_1_guardrail",
+          "size_m": {
+            "depth": 0.04,
+            "height": 0.15,
+            "width": 1.14565
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": -0.775864,
+            "z": 0.285417
+          },
+          "id": "loft_bed_1_ladder_rung_1",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": -0.715728,
+            "z": 0.568333
+          },
+          "id": "loft_bed_1_ladder_rung_2",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": -0.655593,
+            "z": 0.85125
+          },
+          "id": "loft_bed_1_ladder_rung_3",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": -0.595457,
+            "z": 1.134167
+          },
+          "id": "loft_bed_1_ladder_rung_4",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.6415,
+            "y": -0.535321,
+            "z": 1.417083
+          },
+          "id": "loft_bed_1_ladder_rung_5",
+          "size_m": {
+            "depth": 0.071797,
+            "height": 0.039447,
+            "width": 0.35
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.8615,
+            "y": -0.655593,
+            "z": 0.85125
+          },
+          "id": "loft_bed_1_ladder_stile_-1",
+          "size_m": {
+            "depth": 0.385708,
+            "height": 1.700827,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.4215,
+            "y": -0.655593,
+            "z": 0.85125
+          },
+          "id": "loft_bed_1_ladder_stile_1",
+          "size_m": {
+            "depth": 0.385708,
+            "height": 1.700827,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.5825
+          },
+          "id": "loft_bed_1_mattress",
+          "size_m": {
+            "depth": 0.87456,
+            "height": 0.16,
+            "width": 1.85932
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.47
+          },
+          "id": "loft_bed_1_platform",
+          "size_m": {
+            "depth": 1.016,
+            "height": 0.06,
+            "width": 2.083
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.9965,
+            "y": 0.463,
+            "z": 0.87625
+          },
+          "id": "loft_bed_1_post_-1_-1",
+          "size_m": {
+            "depth": 0.09,
+            "height": 1.7475,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.9965,
+            "y": 0.463,
+            "z": 0.87625
+          },
+          "id": "loft_bed_1_post_-1_1",
+          "size_m": {
+            "depth": 0.09,
+            "height": 1.7475,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.9965,
+            "y": -0.463,
+            "z": 0.87625
+          },
+          "id": "loft_bed_1_post_1_-1",
+          "size_m": {
+            "depth": 0.09,
+            "height": 1.7475,
+            "width": 0.09
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.9965,
+            "y": -0.463,
+            "z": 0.87625
+          },
+          "id": "loft_bed_1_post_1_1",
+          "size_m": {
+            "depth": 0.09,
+            "height": 1.7475,
+            "width": 0.09
+          }
+        }
+      ],
+      "instance_id": "loft_bed_1"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.5615
+          },
+          "id": "microchill_1_body",
+          "size_m": {
+            "depth": 0.508,
+            "height": 1.118,
+            "width": 0.508
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.2565,
+            "z": 0.34908
+          },
+          "id": "microchill_1_door",
+          "size_m": {
+            "depth": 0.025,
+            "height": 0.64316,
+            "width": 0.448
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.189,
+            "y": 0.2815,
+            "z": 0.34908
+          },
+          "id": "microchill_1_handle",
+          "size_m": {
+            "depth": 0.03,
+            "height": 0.291127,
+            "width": 0.03
+          }
+        },
+        {
+          "center_m": {
+            "x": 0.17272,
+            "y": 0.2815,
+            "z": 0.912577
+          },
+          "id": "microchill_1_microwave_control",
+          "size_m": {
+            "depth": 0.014,
+            "height": 0.202907,
+            "width": 0.07112
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.2625,
+            "z": 0.90558
+          },
+          "id": "microchill_1_microwave_face",
+          "size_m": {
+            "depth": 0.032,
+            "height": 0.34984,
+            "width": 0.463
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.0381,
+            "y": 0.2945,
+            "z": 0.786634
+          },
+          "id": "microchill_1_microwave_handle",
+          "size_m": {
+            "depth": 0.024,
+            "height": 0.022,
+            "width": 0.28448
+          }
+        },
+        {
+          "center_m": {
+            "x": -0.0381,
+            "y": 0.2815,
+            "z": 0.916075
+          },
+          "id": "microchill_1_microwave_window",
+          "size_m": {
+            "depth": 0.014,
+            "height": 0.181917,
+            "width": 0.28448
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0.2565,
+            "z": 0.71316
+          },
+          "id": "microchill_1_separator",
+          "size_m": {
+            "depth": 0.035,
+            "height": 0.025,
+            "width": 0.473
+          }
+        }
+      ],
+      "instance_id": "microchill_1"
+    },
+    {
+      "colliders": [
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 0.525
+          },
+          "id": "window_1_frame_bottom",
+          "size_m": {
+            "depth": 0.06,
+            "height": 0.05,
+            "width": 2.5
+          }
+        },
+        {
+          "center_m": {
+            "x": -1.225,
+            "y": 0,
+            "z": 1.35
+          },
+          "id": "window_1_frame_left",
+          "size_m": {
+            "depth": 0.06,
+            "height": 1.7,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 1.225,
+            "y": 0,
+            "z": 1.35
+          },
+          "id": "window_1_frame_right",
+          "size_m": {
+            "depth": 0.06,
+            "height": 1.7,
+            "width": 0.05
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 2.175
+          },
+          "id": "window_1_frame_top",
+          "size_m": {
+            "depth": 0.06,
+            "height": 0.05,
+            "width": 2.5
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": 0,
+            "z": 1.35
+          },
+          "id": "window_1_glass",
+          "size_m": {
+            "depth": 0.02,
+            "height": 1.54,
+            "width": 2.34
+          }
+        },
+        {
+          "center_m": {
+            "x": 0,
+            "y": -0.0325,
+            "z": 0.51
+          },
+          "id": "window_1_sill",
+          "size_m": {
+            "depth": 0.14,
+            "height": 0.04,
+            "width": 2.54
+          }
+        }
+      ],
+      "instance_id": "window_1"
+    }
+  ],
+  "manifest_version": 1,
+  "room_id": "unit-3-standard-triple",
+  "scene_revision": "unit-3-standard-triple-canonical-v2"
+}

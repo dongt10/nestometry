@@ -10,7 +10,7 @@ import {
   type ComponentRef,
   type RefObject
 } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import {
   ContactShadows,
   Environment,
@@ -24,6 +24,9 @@ import {
 import {
   ACESFilmicToneMapping,
   Box3,
+  BoxHelper,
+  Matrix4,
+  MathUtils,
   MOUSE,
   Plane,
   Raycaster,
@@ -32,6 +35,7 @@ import {
   Vector3,
   type Color,
   type Material,
+  type Mesh,
   type Object3D,
   type OrthographicCamera as ThreeOrthographicCamera,
   type PerspectiveCamera as ThreePerspectiveCamera
@@ -52,14 +56,21 @@ import {
   type ArrangementState
 } from '../data/arrangementState';
 import {
+  applyFurnitureVisibility,
   collectArrangeInstances,
   collectFurnitureGroups,
   DECOR_GROUP,
+  decorRideAlongInstance,
   FURNITURE_GROUP_LABELS,
-  groupForNodeName,
   type FurnitureGroup
 } from '../data/furnitureGroups';
 import { groupBadgeLabel, shellBadgeLabels } from '../data/dimensionBadges';
+import {
+  snapMeters,
+  type CustomBlock,
+  type PlannerPose,
+  type SceneDocument
+} from '../data/plannerDocument';
 
 export type ViewMode = '3d' | '2d' | 'walk';
 /** DOM zoom buttons call this; populated by the in-Canvas ZoomBridge. */
@@ -90,6 +101,11 @@ const ARRANGE_HOVER_EMISSIVE = 0xc99700;
 const ARRANGE_HOVER_INTENSITY = 0.18;
 
 const WORLD_UP = new Vector3(0, 1, 0);
+const EMPTY_REMOVED_INSTANCE_IDS = new Set<string>();
+const DECOR_RELATIVE_TRANSFORMS = new WeakMap<
+  Object3D,
+  { instanceId: string; matrix: Matrix4 }
+>();
 
 /** Loaded GLB meshes, as seen while walking an Object3D graph. */
 type ArrangeMesh = Object3D & { isMesh?: boolean; material: Material | Material[] };
@@ -100,12 +116,16 @@ function DormModel({
   path,
   hiddenGroups,
   onGroupsDiscovered,
-  onSceneReady
+  onSceneReady,
+  removedInstanceIds,
+  plannerDocument
 }: {
   path: string;
   hiddenGroups: Set<FurnitureGroup>;
   onGroupsDiscovered: (groups: FurnitureGroup[]) => void;
   onSceneReady: (scene: Object3D) => void;
+  removedInstanceIds: Set<string>;
+  plannerDocument?: SceneDocument;
 }) {
   const gltf = useGLTF(path);
 
@@ -113,6 +133,41 @@ function DormModel({
     () => collectFurnitureGroups(gltf.scene),
     [gltf.scene]
   );
+  const instanceRoots = useMemo(() => {
+    const roots = new Map<string, Object3D>();
+    for (const node of gltf.scene.children) {
+      const instanceId =
+        typeof node.userData?.instance_id === 'string'
+          ? node.userData.instance_id
+          : null;
+      if (instanceId) roots.set(instanceId, node);
+    }
+    return roots;
+  }, [gltf.scene]);
+  const knownInstanceIds = useMemo(
+    () => new Set(instanceRoots.keys()),
+    [instanceRoots]
+  );
+  const decorBindings = useMemo(() => {
+    gltf.scene.updateMatrixWorld(true);
+    const bindings: Array<{ node: Object3D; instanceId: string; relative: Matrix4 }> = [];
+    for (const node of gltf.scene.children) {
+      const instanceId = decorRideAlongInstance(node.name, knownInstanceIds);
+      if (!instanceId) continue;
+      let cached = DECOR_RELATIVE_TRANSFORMS.get(node);
+      if (!cached) {
+        const root = instanceRoots.get(instanceId);
+        if (!root) continue;
+        cached = {
+          instanceId,
+          matrix: root.matrixWorld.clone().invert().multiply(node.matrixWorld)
+        };
+        DECOR_RELATIVE_TRANSFORMS.set(node, cached);
+      }
+      bindings.push({ node, instanceId: cached.instanceId, relative: cached.matrix });
+    }
+    return bindings;
+  }, [gltf.scene, instanceRoots, knownInstanceIds]);
 
   // Report which groups exist so the parent can render the right checkboxes.
   useEffect(() => {
@@ -154,25 +209,35 @@ function DormModel({
   //      not hidden. Rug/curtains have no attached_to and follow the master only.
   // Non-decor groups keep the plain "hidden set" behavior.
   useEffect(() => {
-    const decorHidden = hiddenGroups.has(DECOR_GROUP);
-    for (const [group, nodes] of groups) {
-      if (group === DECOR_GROUP) {
-        for (const node of nodes) {
-          const attachedTo = node.userData?.attached_to;
-          const attachedHidden =
-            typeof attachedTo === 'string'
-              ? hiddenGroups.has(groupForNodeName(attachedTo) ?? (attachedTo as FurnitureGroup))
-              : false;
-          node.visible = !decorHidden && !attachedHidden;
-        }
-        continue;
-      }
-      const visible = !hiddenGroups.has(group);
-      for (const node of nodes) {
-        node.visible = visible;
-      }
+    applyFurnitureVisibility(
+      groups,
+      hiddenGroups,
+      removedInstanceIds,
+      knownInstanceIds
+    );
+  }, [groups, hiddenGroups, knownInstanceIds, removedInstanceIds]);
+
+  useEffect(() => {
+    if (!plannerDocument) return;
+    const poses = new Map(
+      plannerDocument.layout.instances.map((instance) => [instance.id, instance.pose] as const)
+    );
+    for (const [instanceId, node] of instanceRoots) {
+      const pose = poses.get(instanceId);
+      if (!pose) continue;
+      node.position.set(pose.position_m.x, pose.position_m.z, -pose.position_m.y);
+      node.rotation.set(0, MathUtils.degToRad(pose.rotation_deg.z), 0);
     }
-  }, [groups, hiddenGroups]);
+    gltf.scene.updateMatrixWorld(true);
+    const sceneInverse = gltf.scene.matrixWorld.clone().invert();
+    for (const { node, instanceId, relative } of decorBindings) {
+      const root = instanceRoots.get(instanceId);
+      if (!root) continue;
+      const local = sceneInverse.clone().multiply(root.matrixWorld).multiply(relative);
+      local.decompose(node.position, node.quaternion, node.scale);
+    }
+    gltf.scene.updateMatrixWorld(true);
+  }, [decorBindings, gltf.scene, instanceRoots, plannerDocument]);
 
   return <primitive object={gltf.scene} />;
 }
@@ -188,12 +253,28 @@ function DormModel({
  * mode the camera is inside the room, so culling is disabled entirely: every
  * wall stays up around the walker. Orbit (3D) culling resumes on exit.
  */
-function WallCuller({ scene, mode }: { scene: Object3D | null; mode: ViewMode }) {
+function WallCuller({
+  scene,
+  room,
+  mode,
+  enabled
+}: {
+  scene: Object3D | null;
+  room: Room;
+  mode: ViewMode;
+  enabled: boolean;
+}) {
+  const surfaceBehavior = useMemo(
+    () => new Map<string, string>(room.visualization_scene.surfaces.map((surface) => [surface.id, surface.fade_behavior])),
+    [room.visualization_scene.surfaces]
+  );
   const walls = useMemo(() => {
     if (!scene) return [] as { node: Object3D; outward: Vector3 }[];
     const found: { node: Object3D; outward: Vector3 }[] = [];
     for (const node of scene.children) {
       if (!node.name.startsWith('wall_')) continue;
+      const surfaceId = node.name === 'wall_back_window' ? 'wall_window' : node.name;
+      if (surfaceBehavior.get(surfaceId) !== 'smart_orbit') continue;
       // Outward direction = horizontal position relative to room centre.
       const outward = new Vector3(node.position.x, 0, node.position.z);
       if (outward.lengthSq() < 1e-6) continue;
@@ -201,7 +282,7 @@ function WallCuller({ scene, mode }: { scene: Object3D | null; mode: ViewMode })
       found.push({ node, outward });
     }
     return found;
-  }, [scene]);
+  }, [scene, surfaceBehavior]);
 
   const camDir = useRef(new Vector3());
   const frame = useRef(0);
@@ -210,7 +291,7 @@ function WallCuller({ scene, mode }: { scene: Object3D | null; mode: ViewMode })
     if (walls.length === 0) return;
     // Top-down 2D (floor-plan outline) and first-person walk (inside the room):
     // keep every wall visible; only the 3D orbit dollhouse culls.
-    if (mode !== '3d') {
+    if (mode !== '3d' || !enabled) {
       for (const { node } of walls) node.visible = true;
       return;
     }
@@ -228,6 +309,289 @@ function WallCuller({ scene, mode }: { scene: Object3D | null; mode: ViewMode })
   });
 
   return null;
+}
+
+function FrameBudget({ enabled, onDowngrade }: { enabled: boolean; onDowngrade: () => void }) {
+  const sample = useRef({ elapsed: 0, frames: 0, lowIntervals: 0, finished: false });
+  useFrame((_, delta) => {
+    const current = sample.current;
+    if (!enabled || current.finished) return;
+    if (document.visibilityState !== 'visible') {
+      current.elapsed = 0;
+      current.frames = 0;
+      current.lowIntervals = 0;
+      return;
+    }
+    current.elapsed += Math.min(delta, 0.1);
+    current.frames += 1;
+    if (current.elapsed < 1) return;
+    const fps = current.frames / current.elapsed;
+    current.lowIntervals = fps < 45 ? current.lowIntervals + 1 : 0;
+    current.elapsed = 0;
+    current.frames = 0;
+    if (current.lowIntervals >= 3) {
+      current.finished = true;
+      onDowngrade();
+    }
+  });
+  return null;
+}
+
+function plannerPointToThree(point: { x: number; y: number; z: number }): [number, number, number] {
+  return [point.x, point.z, -point.y];
+}
+
+function threePointToPlanner(point: Vector3) {
+  return { x: point.x, y: -point.z, z: point.y };
+}
+
+function ConflictOutlines({
+  scene,
+  instanceIds
+}: {
+  scene: Object3D | null;
+  instanceIds: ReadonlySet<string>;
+}) {
+  const helpers = useMemo(() => {
+    if (!scene) return [] as BoxHelper[];
+    const result: BoxHelper[] = [];
+    for (const instanceId of instanceIds) {
+      const node = scene.children.find(
+        (candidate) => candidate.userData?.instance_id === instanceId || candidate.name === instanceId
+      );
+      if (node) result.push(new BoxHelper(node, 0xa74434));
+    }
+    return result;
+  }, [instanceIds, scene]);
+
+  useFrame(() => {
+    for (const helper of helpers) helper.update();
+  });
+
+  useEffect(() => () => {
+    for (const helper of helpers) {
+      helper.geometry.dispose();
+      if (Array.isArray(helper.material)) helper.material.forEach((material) => material.dispose());
+      else helper.material.dispose();
+    }
+  }, [helpers]);
+
+  return <>{helpers.map((helper) => <primitive key={helper.uuid} object={helper} />)}</>;
+}
+
+function OrbitRig({
+  controlsRef,
+  cameraState,
+  resetRevision,
+  onCommit
+}: {
+  controlsRef: RefObject<OrbitControlsImpl | null>;
+  cameraState: SceneDocument['view']['orbit_camera'];
+  resetRevision: number;
+  onCommit?: (camera: SceneDocument['view']['orbit_camera']) => void;
+}) {
+  const camera = useThree((state) => state.camera) as ThreePerspectiveCamera;
+
+  useEffect(() => {
+    const controls = controlsRef.current;
+    camera.position.set(...plannerPointToThree(cameraState.position_m));
+    camera.fov = cameraState.fov_deg;
+    camera.updateProjectionMatrix();
+    controls?.target.set(...plannerPointToThree(cameraState.target_m));
+    controls?.update();
+  }, [camera, cameraState, controlsRef, resetRevision]);
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      makeDefault
+      enableDamping
+      target={plannerPointToThree(cameraState.target_m)}
+      minDistance={2.2}
+      maxDistance={14}
+      maxPolarAngle={Math.PI / 2 - 0.05}
+      onEnd={() => {
+        const controls = controlsRef.current;
+        if (!controls || !onCommit) return;
+        onCommit({
+          position_m: threePointToPlanner(camera.position),
+          target_m: threePointToPlanner(controls.target),
+          fov_deg: camera.fov
+        });
+      }}
+    />
+  );
+}
+
+function PlannerCustomBlock({
+  block,
+  enabled,
+  shell,
+  selected,
+  snapEnabled,
+  hasConflict,
+  controlsRef,
+  onSelect,
+  onCommit,
+  onPosePreview,
+  onPosePreviewEnd,
+  onArrangementAction
+}: {
+  block: CustomBlock;
+  enabled: boolean;
+  shell: { width: number; depth: number };
+  selected: boolean;
+  snapEnabled: boolean;
+  hasConflict: boolean;
+  controlsRef: RefObject<OrbitControlsImpl | null>;
+  onSelect?: (instanceId: string | null) => void;
+  onCommit?: (blockId: string, pose: PlannerPose) => void;
+  onPosePreview?: (kind: 'instance' | 'custom-block', id: string, pose: PlannerPose) => void;
+  onPosePreviewEnd?: () => void;
+  onArrangementAction: (action: ArrangementAction) => void;
+}) {
+  const meshRef = useRef<Mesh | null>(null);
+  const gl = useThree((state) => state.gl);
+  const plane = useMemo(() => new Plane(WORLD_UP, -(block.pose.position_m.z + block.dimensions_m.height / 2)), [block.dimensions_m.height, block.pose.position_m.z]);
+  const hit = useRef(new Vector3());
+  const previewFrame = useRef<number | null>(null);
+  const latestPreview = useRef<PlannerPose | null>(null);
+  const drag = useRef<null | {
+    pointerId: number;
+    captureTarget: {
+      hasPointerCapture: (pointerId: number) => boolean;
+      setPointerCapture: (pointerId: number) => void;
+      releasePointerCapture: (pointerId: number) => void;
+    };
+    startPoint: Vector3;
+    startPose: PlannerPose;
+    moved: boolean;
+  }>(null);
+
+  const finish = useCallback((pointerId: number, reason: ArrangementFinishReason) => {
+    const active = drag.current;
+    if (!active || active.pointerId !== pointerId) return;
+    drag.current = null;
+    try {
+      if (active.captureTarget.hasPointerCapture(pointerId)) {
+        active.captureTarget.releasePointerCapture(pointerId);
+      }
+    } catch {
+      // Capture may already be gone after cancellation or canvas teardown.
+    }
+    if (previewFrame.current !== null) cancelAnimationFrame(previewFrame.current);
+    previewFrame.current = null;
+    latestPreview.current = null;
+    onPosePreviewEnd?.();
+    if (controlsRef.current) controlsRef.current.enabled = true;
+    const mesh = meshRef.current;
+    if (active.moved && mesh && onCommit) {
+      onCommit(block.id, {
+        ...active.startPose,
+        position_m: {
+          x: Number(mesh.position.x.toFixed(3)),
+          y: Number((-mesh.position.z).toFixed(3)),
+          z: active.startPose.position_m.z
+        }
+      });
+    }
+    onArrangementAction({ type: 'drag-end', moved: active.moved, reason });
+  }, [block.id, controlsRef, onArrangementAction, onCommit, onPosePreviewEnd]);
+
+  useEffect(() => {
+    if (enabled) return;
+    const active = drag.current;
+    if (active) finish(active.pointerId, 'cleanup');
+  }, [enabled, finish]);
+
+  useEffect(() => () => {
+    if (previewFrame.current !== null) cancelAnimationFrame(previewFrame.current);
+    if (controlsRef.current) controlsRef.current.enabled = true;
+  }, [controlsRef]);
+
+  const rotated = Math.round(block.pose.rotation_deg.z / 90) % 2 !== 0;
+  const halfWidth = (rotated ? block.dimensions_m.depth : block.dimensions_m.width) / 2;
+  const halfDepth = (rotated ? block.dimensions_m.width : block.dimensions_m.depth) / 2;
+
+  return (
+    <mesh
+      ref={meshRef}
+      name={block.id}
+      position={[block.pose.position_m.x, block.pose.position_m.z + block.dimensions_m.height / 2, -block.pose.position_m.y]}
+      rotation={[0, MathUtils.degToRad(block.pose.rotation_deg.z), 0]}
+      onPointerDown={(event: ThreeEvent<PointerEvent>) => {
+        event.stopPropagation();
+        onSelect?.(block.id);
+        if (!enabled || drag.current) return;
+        const startPoint = event.ray.intersectPlane(plane, hit.current)
+          ? hit.current.clone()
+          : event.point.clone();
+        const captureTarget = event.target as unknown as {
+          hasPointerCapture: (pointerId: number) => boolean;
+          setPointerCapture: (pointerId: number) => void;
+          releasePointerCapture: (pointerId: number) => void;
+        };
+        drag.current = {
+          pointerId: event.pointerId,
+          captureTarget,
+          startPoint,
+          startPose: structuredClone(block.pose),
+          moved: false
+        };
+        if (controlsRef.current) controlsRef.current.enabled = false;
+        onArrangementAction({ type: 'drag-start' });
+        try {
+          captureTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // Synthetic or already-released pointers may not be capturable.
+        }
+      }}
+      onPointerMove={(event: ThreeEvent<PointerEvent>) => {
+        const active = drag.current;
+        const mesh = meshRef.current;
+        if (!active || !mesh || active.pointerId !== event.pointerId) return;
+        event.stopPropagation();
+        if (!event.ray.intersectPlane(plane, hit.current)) return;
+        const dx = hit.current.x - active.startPoint.x;
+        const dz = hit.current.z - active.startPoint.z;
+        const rawX = Math.min(Math.max(active.startPose.position_m.x + dx, -shell.width / 2 + halfWidth), shell.width / 2 - halfWidth);
+        const rawY = Math.min(Math.max(active.startPose.position_m.y - dz, -shell.depth / 2 + halfDepth), shell.depth / 2 - halfDepth);
+        const x = snapEnabled ? snapMeters(rawX) : rawX;
+        const y = snapEnabled ? snapMeters(rawY) : rawY;
+        mesh.position.set(x, block.pose.position_m.z + block.dimensions_m.height / 2, -y);
+        const moved = Math.abs(x - active.startPose.position_m.x) > 1e-6 || Math.abs(y - active.startPose.position_m.y) > 1e-6;
+        if (moved && !active.moved) onArrangementAction({ type: 'drag-move' });
+        active.moved ||= moved;
+        latestPreview.current = {
+          ...active.startPose,
+          position_m: { x, y, z: active.startPose.position_m.z }
+        };
+        if (previewFrame.current === null) {
+          previewFrame.current = requestAnimationFrame(() => {
+            previewFrame.current = null;
+            if (latestPreview.current) onPosePreview?.('custom-block', block.id, latestPreview.current);
+          });
+        }
+        gl.shadowMap.needsUpdate = true;
+      }}
+      onPointerUp={(event: ThreeEvent<PointerEvent>) => {
+        event.stopPropagation();
+        finish(event.pointerId, 'pointer-up');
+      }}
+      onPointerCancel={(event: ThreeEvent<PointerEvent>) => {
+        event.stopPropagation();
+        finish(event.pointerId, 'pointer-cancel');
+      }}
+    >
+      <boxGeometry args={[block.dimensions_m.width, block.dimensions_m.height, block.dimensions_m.depth]} />
+      <meshStandardMaterial
+        color={hasConflict ? '#a74434' : selected ? '#6f7450' : '#85886b'}
+        transparent
+        opacity={hasConflict ? 0.52 : selected ? 0.48 : 0.38}
+        roughness={0.85}
+      />
+    </mesh>
+  );
 }
 
 /**
@@ -323,22 +687,26 @@ function DimensionOverlay({
  */
 function ZoomBridge({
   zoomRef,
-  controlsRef
+  controlsRef,
+  onCommit
 }: {
   zoomRef: RefObject<ZoomFn | null>;
   controlsRef: RefObject<OrbitControlsImpl | null>;
+  onCommit?: (camera: SceneDocument['view']['orbit_camera']) => void;
 }) {
   const camera = useThree((s) => s.camera);
   useEffect(() => {
     zoomRef.current = (direction) => {
+      const controls = controlsRef.current;
       if ((camera as ThreePerspectiveCamera).isPerspectiveCamera) {
         // Dolly along the view direction; clamp distance so we can't cross the target.
-        const dir = new Vector3().subVectors(camera.position, TARGET);
+        const target = controls?.target ?? TARGET;
+        const dir = new Vector3().subVectors(camera.position, target);
         const dist = dir.length();
         const factor = direction === 1 ? 0.85 : 1.18; // in = closer
         const next = Math.min(Math.max(dist * factor, 2.2), 14);
         dir.setLength(next);
-        camera.position.copy(TARGET).add(dir);
+        camera.position.copy(target).add(dir);
       } else {
         // Orthographic: zoom the projection.
         const cam = camera as unknown as { zoom: number; updateProjectionMatrix: () => void };
@@ -346,12 +714,19 @@ function ZoomBridge({
         cam.zoom = Math.min(Math.max(cam.zoom * factor, 20), 260);
         cam.updateProjectionMatrix();
       }
-      controlsRef.current?.update();
+      controls?.update();
+      if ((camera as ThreePerspectiveCamera).isPerspectiveCamera && controls && onCommit) {
+        onCommit({
+          position_m: threePointToPlanner(camera.position),
+          target_m: threePointToPlanner(controls.target),
+          fov_deg: (camera as ThreePerspectiveCamera).fov
+        });
+      }
     };
     return () => {
       zoomRef.current = null;
     };
-  }, [camera, zoomRef, controlsRef]);
+  }, [camera, controlsRef, onCommit, zoomRef]);
   return null;
 }
 
@@ -367,7 +742,22 @@ function SceneContent({
   arrangementState,
   onArrangementAction,
   resetLayoutRef,
-  zoomRef
+  zoomRef,
+  removedInstanceIds,
+  cameraResetRevision,
+  renderProfile,
+  plannerDocument,
+  selectedInstanceId,
+  snapEnabled,
+  onInstanceSelected,
+  onInstancePoseCommit,
+  onCustomBlockPoseCommit,
+  onPosePreview,
+  onPosePreviewEnd,
+  showConfidence,
+  conflictInstanceIds,
+  onCameraCommit,
+  onAutoDowngrade
 }: {
   item: RoomManifestItem;
   mode: ViewMode;
@@ -381,6 +771,21 @@ function SceneContent({
   onArrangementAction: (action: ArrangementAction) => void;
   resetLayoutRef: RefObject<(() => void) | null>;
   zoomRef: RefObject<ZoomFn | null>;
+  removedInstanceIds: Set<string>;
+  cameraResetRevision: number;
+  renderProfile: 'auto' | 'low' | 'balanced' | 'high';
+  plannerDocument?: SceneDocument;
+  selectedInstanceId?: string | null;
+  snapEnabled?: boolean;
+  onInstanceSelected?: (instanceId: string | null) => void;
+  onInstancePoseCommit?: (instanceId: string, pose: PlannerPose) => void;
+  onCustomBlockPoseCommit?: (blockId: string, pose: PlannerPose) => void;
+  onPosePreview?: (kind: 'instance' | 'custom-block', id: string, pose: PlannerPose) => void;
+  onPosePreviewEnd?: () => void;
+  showConfidence: boolean;
+  conflictInstanceIds: ReadonlySet<string>;
+  onCameraCommit?: (camera: SceneDocument['view']['orbit_camera']) => void;
+  onAutoDowngrade: () => void;
 }) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   // Loaded scene root, stored in state so overlays re-render once it resolves.
@@ -400,7 +805,7 @@ function SceneContent({
     if (ceiling) ceiling.visible = mode === 'walk';
   }, [scene, mode]);
 
-  // The scene is static outside arrange drags, so the key light's 2048^2
+  // The scene is static outside arrange drags, so the key light's 1024²
   // shadow map doesn't need re-rendering every frame (it re-draws every
   // caster otherwise — a large hidden orbit-fps cost). Bake it, and re-bake
   // whenever anything shadow-relevant changes; keep live updates only while
@@ -421,6 +826,7 @@ function SceneContent({
   return (
     <>
       <ambientLight intensity={0.25} />
+      <FrameBudget enabled={renderProfile === 'auto'} onDowngrade={onAutoDowngrade} />
       {/* Key light: casts the room's real shadows. Tight ortho shadow frustum
           around the ~room extents keeps the 1024² map sharp; bias/normalBias
           tuned to avoid acne + peter-panning on the traversed meshes. */}
@@ -436,17 +842,19 @@ function SceneContent({
         shadow-camera-near={1}
         shadow-camera-far={30}
         shadow-bias={-0.0004}
-        shadow-normalBias={0.02}
+        shadow-normalBias={0.005}
       />
       {/* Dim, shadowless fill from the opposite side to lift the darkest faces. */}
       <directionalLight position={[-5, 4, -4]} intensity={0.5} />
 
-      <Suspense fallback={<Html center>Loading room model…</Html>}>
+      <Suspense fallback={<Html center>loading room model…</Html>}>
         <DormModel
           path={item.glbPath}
           hiddenGroups={hiddenGroups}
           onGroupsDiscovered={onGroupsDiscovered}
           onSceneReady={handleSceneReady}
+          removedInstanceIds={removedInstanceIds}
+          plannerDocument={plannerDocument}
         />
         {/* Procedural one-frame IBL: keeps PBR reflections while avoiding the
             network fetch used by Drei's hosted environment presets. */}
@@ -479,7 +887,13 @@ function SceneContent({
         </Environment>
       </Suspense>
 
-      <WallCuller scene={scene} mode={mode} />
+      <WallCuller
+        scene={scene}
+        room={item.room}
+        mode={mode}
+        enabled={plannerDocument?.view.wall_fade_enabled ?? true}
+      />
+      {arrangeOn ? <ConflictOutlines scene={scene} instanceIds={conflictInstanceIds} /> : null}
       {/* Dimension badges are suppressed while walking (they crowd a
           first-person view) and while dragging (their anchors are deliberately
           recomputed once on release instead of on every pointermove). */}
@@ -503,7 +917,7 @@ function SceneContent({
         <ContactShadows
           key={contactShadowKey(item.id, hiddenGroups, arrangementState)}
           frames={1}
-          position={[0, -0.02, 0]}
+          position={[0, 0.002, 0]}
           opacity={0.25}
           scale={12}
           blur={2}
@@ -518,7 +932,7 @@ function SceneContent({
           like ContactShadows) — under the ortho 2D camera the AO/vignette would
           fight the flat plan read. halfRes + reduced sample counts keep the AO
           pass well under a 60 fps frame budget on high-DPI screens. */}
-      {mode !== '2d' ? (
+      {mode !== '2d' && renderProfile !== 'low' ? (
         <EffectComposer multisampling={0}>
           <N8AO aoRadius={0.6} intensity={2.5} distanceFalloff={1} halfRes
                 aoSamples={8} denoiseSamples={4} denoiseRadius={12} />
@@ -534,18 +948,18 @@ function SceneContent({
       ) : mode === 'walk' ? (
         <WalkRig scene={scene} onExit={onWalkExit} onLockChange={onWalkLockChange} />
       ) : (
-        <OrbitControls
-          key="orbit-3d"
-          ref={controlsRef}
-          makeDefault
-          enableDamping
-          target={[0, 1, 0]}
-          minDistance={2.2}
-          maxDistance={14}
-          maxPolarAngle={Math.PI / 2 - 0.05}
+        <OrbitRig
+          controlsRef={controlsRef}
+          cameraState={plannerDocument?.view.orbit_camera ?? {
+            position_m: { x: 3.4, y: -4.8, z: 7.2 },
+            target_m: { x: 0, y: 0, z: 1 },
+            fov_deg: 48
+          }}
+          resetRevision={cameraResetRevision}
+          onCommit={onCameraCommit}
         />
       )}
-      <ZoomBridge zoomRef={zoomRef} controlsRef={controlsRef} />
+      <ZoomBridge zoomRef={zoomRef} controlsRef={controlsRef} onCommit={onCameraCommit} />
       {/* Always mounted so recorded originals survive Arrange/mode toggles;
           the pointer plumbing itself only runs in the 3D orbit view. */}
       <ArrangeController
@@ -555,7 +969,51 @@ function SceneContent({
         controlsRef={controlsRef}
         onArrangementAction={onArrangementAction}
         resetRef={resetLayoutRef}
+        snapEnabled={snapEnabled}
+        onInstanceSelected={onInstanceSelected}
+        onInstancePoseCommit={onInstancePoseCommit}
+        onPosePreview={onPosePreview}
+        onPosePreviewEnd={onPosePreviewEnd}
       />
+      {plannerDocument?.layout.custom_blocks.map((block) => (
+        <PlannerCustomBlock
+          key={block.id}
+          block={block}
+          enabled={mode === '3d' && arrangeOn}
+          shell={{
+            width: item.room.visualization_shell.width.value_m,
+            depth: item.room.visualization_shell.depth.value_m
+          }}
+          selected={selectedInstanceId === block.id}
+          snapEnabled={Boolean(snapEnabled)}
+          hasConflict={conflictInstanceIds.has(block.id)}
+          controlsRef={controlsRef}
+          onSelect={onInstanceSelected}
+          onCommit={onCustomBlockPoseCommit}
+          onPosePreview={onPosePreview}
+          onPosePreviewEnd={onPosePreviewEnd}
+          onArrangementAction={onArrangementAction}
+        />
+      ))}
+      {showConfidence && plannerDocument ? plannerDocument.layout.instances
+        .filter((instance) => !plannerDocument.layout.removed_instance_ids.includes(instance.id))
+        .map((instance) => (
+          <Html
+            key={`confidence-${instance.id}`}
+            position={plannerPointToThree({
+              x: instance.pose.position_m.x,
+              y: instance.pose.position_m.y,
+              z: instance.pose.position_m.z + 1
+            })}
+            center
+            distanceFactor={9}
+            style={{ pointerEvents: 'none' }}
+          >
+            <span className={`confidence-marker confidence-marker--${instance.confidence}`}>
+              {instance.confidence}
+            </span>
+          </Html>
+        )) : null}
     </>
   );
 }
@@ -806,22 +1264,32 @@ function WalkRig({
  *
  * OrbitControls is disabled only while a drag is live, so empty-space drags
  * still orbit. Original positions are recorded once per node at its first drag
- * and `resetRef` restores them all. Everything is session-only: useGLTF caches
- * scenes per path, so on scene swap the cleanup restores the official layout
- * before the cached GLB can leak a custom arrangement into the next visit.
+ * and `resetRef` restores them all. The planner document owns persistence;
+ * useGLTF still caches scenes per path, so scene-swap cleanup restores official
+ * transforms before the next document applies its saved arrangement.
  */
 function ArrangeController({
   scene,
   enabled,
   controlsRef,
   onArrangementAction,
-  resetRef
+  resetRef,
+  snapEnabled = false,
+  onInstanceSelected,
+  onInstancePoseCommit,
+  onPosePreview,
+  onPosePreviewEnd
 }: {
   scene: Object3D | null;
   enabled: boolean;
   controlsRef: RefObject<OrbitControlsImpl | null>;
   onArrangementAction: (action: ArrangementAction) => void;
   resetRef: RefObject<(() => void) | null>;
+  snapEnabled?: boolean;
+  onInstanceSelected?: (instanceId: string | null) => void;
+  onInstancePoseCommit?: (instanceId: string, pose: PlannerPose) => void;
+  onPosePreview?: (kind: 'instance' | 'custom-block', id: string, pose: PlannerPose) => void;
+  onPosePreviewEnd?: () => void;
 }) {
   const camera = useThree((s) => s.camera);
   const gl = useThree((s) => s.gl);
@@ -886,12 +1354,11 @@ function ArrangeController({
       }
       originals.current.clear();
       dirtyRef.current = false;
-      onArrangementAction({ type: 'reset' });
     };
     return () => {
       resetRef.current = null;
     };
-  }, [resetRef, onArrangementAction]);
+  }, [resetRef]);
 
   // Scene lifecycle: when the scene goes away (room switch/unmount), restore
   // the official layout into the CACHED scene graph, drop the originals and
@@ -923,11 +1390,15 @@ function ArrangeController({
     const raycaster = new Raycaster();
     const ndc = new Vector2();
     const planeHit = new Vector3();
+    let previewFrame: number | null = null;
+    let latestPreview: { id: string; pose: PlannerPose } | null = null;
 
     let drag: {
       pointerId: number;
+      instance: string;
       nodes: Object3D[];
       startPositions: Vector3[];
+      rootIndex: number;
       startCenter: Vector3;
       plane: Plane;
       startPoint: Vector3;
@@ -991,6 +1462,10 @@ function ArrangeController({
       // Clear first so a synchronous event raised by releasing capture cannot
       // commit the same drag twice.
       drag = null;
+      if (previewFrame !== null) cancelAnimationFrame(previewFrame);
+      previewFrame = null;
+      latestPreview = null;
+      onPosePreviewEnd?.();
       try {
         if (dom.hasPointerCapture(ended.pointerId)) {
           dom.releasePointerCapture(ended.pointerId);
@@ -1000,6 +1475,25 @@ function ArrangeController({
         // controls and revision state still need to settle below.
       }
       if (controlsRef.current) controlsRef.current.enabled = true;
+      if (ended.moved && onInstancePoseCommit) {
+        const root = ended.nodes.find(
+          (node) => node.userData?.instance_id === ended.instance || node.name === ended.instance
+        ) ?? ended.nodes[0];
+        if (root) {
+          onInstancePoseCommit(ended.instance, {
+            position_m: {
+              x: Number(root.position.x.toFixed(3)),
+              y: Number((-root.position.z).toFixed(3)),
+              z: Number(root.position.y.toFixed(3))
+            },
+            rotation_deg: {
+              x: 0,
+              y: 0,
+              z: Math.round(MathUtils.radToDeg(root.rotation.y) / 90) * 90
+            }
+          });
+        }
+      }
       onArrangementAction({ type: 'drag-end', moved: ended.moved, reason });
       dom.style.cursor = hoveredInstance.current ? 'grab' : '';
     };
@@ -1014,6 +1508,7 @@ function ArrangeController({
       if (!hit) return; // empty space / shell: OrbitControls orbits as usual
       const nodes = instances.get(hit.instance);
       if (!nodes || nodes.length === 0) return;
+      onInstanceSelected?.(hit.instance);
       for (const node of nodes) {
         if (!originals.current.has(node)) {
           originals.current.set(node, node.position.clone());
@@ -1021,10 +1516,15 @@ function ArrangeController({
       }
       const box = new Box3();
       for (const node of nodes) box.expandByObject(node);
+      const rootIndex = Math.max(0, nodes.findIndex(
+        (node) => node.userData?.instance_id === hit.instance || node.name === hit.instance
+      ));
       drag = {
         pointerId: event.pointerId,
+        instance: hit.instance,
         nodes,
         startPositions: nodes.map((node) => node.position.clone()),
+        rootIndex,
         startCenter: box.getCenter(new Vector3()),
         // Horizontal plane through the grab point: the piece tracks under the
         // cursor with no depth jump, and every node keeps its own y.
@@ -1060,13 +1560,46 @@ function ArrangeController({
         const clampedZ = Math.min(Math.max(rawZ, bounds.minZ), bounds.maxZ) - active.startCenter.z;
         // Collapse floating-point ray noise to zero so a stationary click
         // cannot mutate transforms, dirty the layout, or advance the revision.
-        const dx = Math.abs(clampedX) > 1e-6 ? clampedX : 0;
-        const dz = Math.abs(clampedZ) > 1e-6 ? clampedZ : 0;
+        const rootStart = active.startPositions[active.rootIndex];
+        const requestedX = snapEnabled
+          ? snapMeters(rootStart.x + clampedX) - rootStart.x
+          : clampedX;
+        const requestedZ = snapEnabled
+          ? -snapMeters(-(rootStart.z + clampedZ)) - rootStart.z
+          : clampedZ;
+        const dx = Math.abs(requestedX) > 1e-6 ? requestedX : 0;
+        const dz = Math.abs(requestedZ) > 1e-6 ? requestedZ : 0;
         const moved = dx !== 0 || dz !== 0;
         active.nodes.forEach((node, index) => {
           const start = active.startPositions[index];
           node.position.set(start.x + dx, start.y, start.z + dz);
         });
+        const root = active.nodes.find(
+          (node) => node.userData?.instance_id === active.instance || node.name === active.instance
+        ) ?? active.nodes[0];
+        if (root) {
+          latestPreview = {
+            id: active.instance,
+            pose: {
+              position_m: {
+                x: root.position.x,
+                y: -root.position.z,
+                z: root.position.y
+              },
+              rotation_deg: {
+                x: 0,
+                y: 0,
+                z: Math.round(MathUtils.radToDeg(root.rotation.y) / 90) * 90
+              }
+            }
+          };
+          if (previewFrame === null) {
+            previewFrame = requestAnimationFrame(() => {
+              previewFrame = null;
+              if (latestPreview) onPosePreview?.('instance', latestPreview.id, latestPreview.pose);
+            });
+          }
+        }
         if (moved) active.moved = true;
         if (!dirtyRef.current && moved) {
           dirtyRef.current = true;
@@ -1107,6 +1640,7 @@ function ArrangeController({
       dom.removeEventListener('pointerup', onPointerUp);
       dom.removeEventListener('pointercancel', onPointerCancel);
       dom.removeEventListener('pointerleave', onPointerLeave);
+      if (previewFrame !== null) cancelAnimationFrame(previewFrame);
       endDrag('cleanup'); // mid-drag mode switch/toggle-off: re-enable orbiting
       clearHover();
       dom.style.cursor = '';
@@ -1121,7 +1655,12 @@ function ArrangeController({
     gl,
     controlsRef,
     onArrangementAction,
-    clearHover
+    clearHover,
+    snapEnabled,
+    onInstanceSelected,
+    onInstancePoseCommit,
+    onPosePreview,
+    onPosePreviewEnd
   ]);
 
   // SceneContent keys this controller by room. Its pointer cleanup commits a
@@ -1145,7 +1684,21 @@ export function RoomViewer3D({
   onWalkExit,
   onArrangementAction,
   resetLayoutRef,
-  zoomRef
+  zoomRef,
+  removedInstanceIds = EMPTY_REMOVED_INSTANCE_IDS,
+  cameraResetRevision = 0,
+  renderProfile = 'auto',
+  plannerDocument,
+  selectedInstanceId,
+  snapEnabled,
+  onInstanceSelected,
+  onInstancePoseCommit,
+  onCustomBlockPoseCommit,
+  onPosePreview,
+  onPosePreviewEnd,
+  showConfidence = false,
+  conflictInstanceIds = EMPTY_REMOVED_INSTANCE_IDS,
+  onCameraCommit
 }: {
   room: RoomManifestItem;
   mode: ViewMode;
@@ -1158,6 +1711,20 @@ export function RoomViewer3D({
   onArrangementAction: (action: ArrangementAction) => void;
   resetLayoutRef: RefObject<(() => void) | null>;
   zoomRef: RefObject<ZoomFn | null>;
+  removedInstanceIds?: Set<string>;
+  cameraResetRevision?: number;
+  renderProfile?: 'auto' | 'low' | 'balanced' | 'high';
+  plannerDocument?: SceneDocument;
+  selectedInstanceId?: string | null;
+  snapEnabled?: boolean;
+  onInstanceSelected?: (instanceId: string | null) => void;
+  onInstancePoseCommit?: (instanceId: string, pose: PlannerPose) => void;
+  onCustomBlockPoseCommit?: (blockId: string, pose: PlannerPose) => void;
+  onPosePreview?: (kind: 'instance' | 'custom-block', id: string, pose: PlannerPose) => void;
+  onPosePreviewEnd?: () => void;
+  showConfidence?: boolean;
+  conflictInstanceIds?: ReadonlySet<string>;
+  onCameraCommit?: (camera: SceneDocument['view']['orbit_camera']) => void;
 }) {
   // Walk-mode hint state. walkLocked mirrors the pointer-lock state so the hint
   // can prompt for the first canvas click when the browser refused the
@@ -1165,6 +1732,8 @@ export function RoomViewer3D({
   // re-arms on the next walk.
   const [walkLocked, setWalkLocked] = useState(false);
   const [walkHintDismissed, setWalkHintDismissed] = useState(false);
+  const [autoDowngraded, setAutoDowngraded] = useState(false);
+  const effectiveProfile = renderProfile === 'auto' && autoDowngraded ? 'low' : renderProfile;
   useEffect(() => {
     if (mode !== 'walk') {
       setWalkLocked(false);
@@ -1175,12 +1744,17 @@ export function RoomViewer3D({
   return (
     <div className="stage-scene">
       <Canvas
-        camera={{ position: [3.4, 7.2, 4.8], fov: 48 }}
+        camera={{
+          position: plannerDocument
+            ? plannerPointToThree(plannerDocument.view.orbit_camera.position_m)
+            : [3.4, 7.2, 4.8],
+          fov: plannerDocument?.view.orbit_camera.fov_deg ?? 48
+        }}
         shadows="basic"
-        // dpr capped at 1.75: on 2-3x displays the full ratio quadruples the
-        // shaded pixel count for no visible gain at room-viewer distances —
-        // the single biggest lever for maintaining 60 fps while orbiting.
-        dpr={[1, 1.75]}
+        // Balanced/automatic quality caps DPR at 1.5; high permits 2 and low
+        // fixes it at 1. Limiting shaded pixels is the main performance lever
+        // on dense displays while orbiting.
+        dpr={effectiveProfile === 'low' ? 1 : effectiveProfile === 'high' ? [1, 2] : [1, 1.5]}
         gl={{
           antialias: true,
           toneMapping: ACESFilmicToneMapping,
@@ -1200,20 +1774,35 @@ export function RoomViewer3D({
           onArrangementAction={onArrangementAction}
           resetLayoutRef={resetLayoutRef}
           zoomRef={zoomRef}
+          removedInstanceIds={removedInstanceIds}
+          cameraResetRevision={cameraResetRevision}
+          renderProfile={effectiveProfile}
+          plannerDocument={plannerDocument}
+          selectedInstanceId={selectedInstanceId}
+          snapEnabled={snapEnabled}
+          onInstanceSelected={onInstanceSelected}
+          onInstancePoseCommit={onInstancePoseCommit}
+          onCustomBlockPoseCommit={onCustomBlockPoseCommit}
+          onPosePreview={onPosePreview}
+          onPosePreviewEnd={onPosePreviewEnd}
+          showConfidence={showConfidence}
+          conflictInstanceIds={conflictInstanceIds}
+          onCameraCommit={onCameraCommit}
+          onAutoDowngrade={() => setAutoDowngraded(true)}
         />
       </Canvas>
       {/* Dismissable walk-mode hint, top-centre under the top bar. */}
       {mode === 'walk' && !walkHintDismissed ? (
         <div className="walk-hint" role="status">
           <div className="walk-hint-lines">
-            <span className="walk-hint-keys">WASD / arrows to move - mouse to look - ESC to exit</span>
-            {!walkLocked ? <span className="walk-hint-sub">Click the room to start walking</span> : null}
+            <span className="walk-hint-keys">wasd / arrows to move · mouse to look · esc to exit</span>
+            {!walkLocked ? <span className="walk-hint-sub">click the room to start walking</span> : null}
           </div>
           <button
             type="button"
             className="walk-hint-close"
             onClick={() => setWalkHintDismissed(true)}
-            aria-label="Dismiss walk hint"
+            aria-label="dismiss walk hint"
           >
             ×
           </button>
@@ -1222,16 +1811,15 @@ export function RoomViewer3D({
       {/* Honesty note while any furniture is displaced from the GLB layout.
           Clears on Reset layout or a room switch; the accuracy chip below is
           untouched. */}
-      {arrangementState.layoutDirty ? (
-        <div className="stage-arrange-note" role="status">
-          Custom arrangement — not the official layout
+      <div className="stage-status-stack">
+        {arrangementState.layoutDirty ? (
+          <div className="stage-arrange-note" role="status">
+            custom arrangement · not the representative layout
+          </div>
+        ) : null}
+        <div className="stage-accuracy-chip">
+          representative model · dimensions estimated · actual rooms vary
         </div>
-      ) : null}
-      {/* Always-visible honesty chip floating over the stage. */}
-      <div className="stage-accuracy-chip">
-        {mode === '2d'
-          ? 'Top-down view. Estimated dimensions must be verified before fit-critical decisions.'
-          : 'Representative model. Estimated dimensions must be verified before fit-critical decisions.'}
       </div>
     </div>
   );
@@ -1251,7 +1839,7 @@ export function FurnitureToggles({
   onToggle: (group: FurnitureGroup, visible: boolean) => void;
 }) {
   if (availableGroups.length === 0) {
-    return <p className="furniture-empty">Furniture appears once the model loads.</p>;
+    return <p className="furniture-empty">furniture appears once the model loads.</p>;
   }
   // Decor is a master switch pinned above the grid, not a furniture chip. Split
   // it out so it never renders as a duplicate entry in the chip grid.
@@ -1270,10 +1858,10 @@ export function FurnitureToggles({
           <span className="decor-master-track" aria-hidden="true">
             <span className="decor-master-knob" />
           </span>
-          <span className="decor-master-label">Decor (illustrative)</span>
+          <span className="decor-master-label">decor (illustrative)</span>
         </label>
       ) : null}
-      <div className="furniture-chip-grid" role="group" aria-label="Furniture visibility">
+      <div className="furniture-chip-grid" role="group" aria-label="furniture visibility">
         {furnitureGroups.map((group) => {
           const visible = !hiddenGroups.has(group);
           return (

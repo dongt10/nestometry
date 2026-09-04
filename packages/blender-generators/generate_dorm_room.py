@@ -23,7 +23,7 @@ Design notes
     * exact top-level wall names + their centroid x/z (WallCuller normals),
     * floor/ceiling names,
     * furniture group prefixes (collectFurnitureGroups),
-    * freestanding furniture staying flat top-level (grouping),
+    * each furniture/opening instance living below a stable top-level root,
     * wall-attached trim parented to its wall (hides with the wall).
   Read the HARD CONSTRAINTS in the task before changing names/positions.
 """
@@ -32,6 +32,7 @@ import argparse
 import json
 import math
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -39,7 +40,7 @@ from pathlib import Path
 try:
     import bpy
     import bmesh
-    from mathutils import Vector
+    from mathutils import Matrix, Vector
 except Exception as exc:  # pragma: no cover - only runs inside Blender
     raise RuntimeError("This script must be run with Blender's Python environment.") from exc
 
@@ -49,8 +50,14 @@ import numpy as np
 # Constants
 # --------------------------------------------------------------------------
 
-# Deterministic master seed so every export is byte-stable.
+# Deterministic master seed so procedural texture content is reproducible.
+# Blender/glTF optimization may still change binary packing between runs.
 TEX_SEED = 20260701
+
+# Bump only when the generated scene contract or canonical placement changes.
+# It is exported on every mesh/root so downstream tools can reject stale scene
+# metadata without inferring a generator version from geometry.
+SCENE_REVISION = "unit3-canonical-v3"
 
 # Contact epsilon: when one box sits ON or presses flat AGAINST another visible
 # surface, lift/offset the upper/outer box by this much so the two never share
@@ -90,6 +97,11 @@ FURNITURE_PREFIXES = [
     "chair",
     "door",
 ]
+
+MOVABLE_FURNITURE_PREFIXES = {
+    "twin_xl_bed", "loft_bed", "bunk_bed", "microchill",
+    "dresser", "desk", "chair",
+}
 
 # Populated per-run so validate_scene can assert texture coverage.
 _TEXDIR = None
@@ -131,6 +143,10 @@ def parse_args():
     parser.add_argument("--schema", required=True, help="Path to room JSON schema")
     parser.add_argument("--out", required=True, help="Output GLB path")
     parser.add_argument("--blend", required=True, help="Output .blend path")
+    parser.add_argument(
+        "--collider-manifest",
+        help="Derived scene/collider JSON (defaults beside --out)",
+    )
     return parser.parse_args(argv)
 
 
@@ -540,6 +556,10 @@ def _load_img(name, colorspace):
     except Exception:
         pass
     img.pack()
+    # Packed images do not need their temporary on-disk source after loading.
+    # Keep a stable virtual path in the editable .blend so release artifacts do
+    # not retain machine-specific temp directories or random run identifiers.
+    img.filepath_raw = f"//textures/{name}"
     _IMAGES.append(img)
     return img
 
@@ -754,6 +774,339 @@ def decor_props(room, attached_to=None):
     return props
 
 
+def furniture_identity(name):
+    """Return a stable ``(group, instance_id)`` derived from the node contract.
+
+    The renderer historically inferred grouping from names. Exporting the same
+    identity explicitly keeps new consumers from having to duplicate that
+    parser and gives the collider manifest deterministic foreign keys.
+    """
+    for group in FURNITURE_PREFIXES:
+        match = re.match(rf"^{re.escape(group)}_(\d+)(?:_|$)", name)
+        if match:
+            return group, f"{group}_{match.group(1)}"
+        if name == group:
+            return group, group
+    return None, None
+
+
+def attached_wall_id(obj):
+    parent = obj.parent
+    while parent is not None:
+        if parent.name.startswith(WALL_PREFIX):
+            return parent.name
+        parent = parent.parent
+    return None
+
+
+def instance_anchor_node(instance_id, nodes):
+    """Return the semantic center node used as an instance's floor pivot."""
+    suffix_by_group = {
+        "twin_xl_bed": "mattress",
+        "loft_bed": "platform",
+        "bunk_bed": "lower_platform",
+        "desk": "top",
+        "chair": "seat",
+        "dresser": "carcass",
+        "closet": "kick",
+        "microchill": "body",
+        "door": "leaf",
+        "window": "frame_top",
+    }
+    group, _ = furniture_identity(instance_id)
+    suffix = suffix_by_group.get(group)
+    expected = f"{instance_id}_{suffix}" if suffix else None
+    return next((node for node in nodes if node.name == expected), None)
+
+
+def generated_baseline_yaw_deg(room, instance_id):
+    """Yaw already baked into the procedural builder's room-space meshes.
+
+    Object dimensions use a local width/depth frame; older builders place
+    several instances directly along room Y or facing a desk. Declaring those
+    baseline yaws here lets schema yaw replace, rather than merely annotate,
+    that generated orientation during root creation.
+    """
+    if instance_id in ("twin_xl_bed_1", "twin_xl_bed_2", "loft_bed_1", "bunk_bed_1"):
+        return 90.0
+    if instance_id in ("desk_1", "desk_2"):
+        return 90.0
+    if instance_id == "chair_1":
+        return 270.0
+    if instance_id == "chair_2":
+        return 270.0 if not is_standard_double(room) else 90.0
+    if instance_id == "dresser_2" and not is_standard_double(room):
+        return 90.0
+    return 0.0
+
+
+def create_instance_roots(room):
+    """Group every generated instance below one stable top-level root.
+
+    Schema-backed roots use the exact visualization-scene pose *as the actual
+    room transform*. The procedural builders still construct parts in room
+    space, so each group is first recentered around a floor-origin pivot and
+    shifted to its schema position before parenting. The root's inverse
+    baseline rotation then becomes the local component frame; changing the
+    root pose in the planner moves/rotates the complete object around its own
+    centered pivot rather than an unrelated generator-world origin.
+
+    Any future generated auxiliary instances receive the same centered
+    floor-origin treatment and remain explicitly marked as derived. All
+    independent instances in the current double and triple are schema-backed.
+    """
+    meshes = [obj for obj in bpy.data.objects if obj.type == "MESH"]
+    generated = {}
+    for obj in meshes:
+        group, instance_id = furniture_identity(obj.name)
+        if instance_id:
+            generated.setdefault(instance_id, []).append(obj)
+
+    scene = room.get("visualization_scene") or {}
+    scene_revision = scene.get("revision", SCENE_REVISION)
+    schema_instances = {item["id"]: item for item in scene.get("instances", [])}
+
+    for instance_id, nodes in sorted(generated.items()):
+        item = schema_instances.get(instance_id)
+        bounds = aggregate_bounds(nodes)
+        if item:
+            pose = item["pose"]
+            position = pose["position_m"]
+            rotation = pose["rotation_deg"]
+            source_id = item.get("source_id")
+            confidence = item.get("confidence")
+            role = item.get("role")
+            removable = bool(item.get("removable"))
+            object_id = item.get("object_id")
+            placement_basis = item.get("placement_basis")
+            pose_basis = "visualization_scene"
+        else:
+            minimum, maximum = bounds
+            position = {
+                "x": (minimum.x + maximum.x) / 2,
+                "y": (minimum.y + maximum.y) / 2,
+                "z": 0,
+            }
+            rotation = {"x": 0, "y": 0, "z": 0}
+            source_id = nodes[0].get("source_id")
+            confidence = nodes[0].get("confidence")
+            group = nodes[0].get("furniture_group") or furniture_identity(nodes[0].name)[0]
+            role = "movable" if group in MOVABLE_FURNITURE_PREFIXES else "attached"
+            removable = group in MOVABLE_FURNITURE_PREFIXES
+            object_id = f"{group}_group" if group not in ("door", "window", "microchill") else instance_id
+            placement_basis = "generated_from_canonical_layout"
+            pose_basis = "derived_generated_instance"
+
+        minimum, maximum = bounds
+        anchor = instance_anchor_node(instance_id, nodes)
+        anchor_position = (
+            anchor.matrix_world.translation
+            if anchor is not None
+            else (minimum + maximum) / 2
+        )
+        generated_pivot = Vector((anchor_position.x, anchor_position.y, 0))
+        target_position = Vector((
+            float(position["x"]), float(position["y"]), float(position["z"]),
+        ))
+        baseline_yaw = generated_baseline_yaw_deg(room, instance_id)
+        target_yaw = float(rotation["z"])
+        alignment = (
+            Matrix.Translation(target_position)
+            @ Matrix.Rotation(math.radians(target_yaw - baseline_yaw), 4, "Z")
+            @ Matrix.Translation(-generated_pivot)
+        )
+        for node in nodes:
+            node.matrix_world = alignment @ node.matrix_world
+
+        root = bpy.data.objects.new(instance_id, None)
+        get_collection("Furniture").objects.link(root)
+        root.location = target_position
+        root.rotation_euler = tuple(
+            math.radians(float(rotation[axis])) for axis in ("x", "y", "z")
+        )
+        root["instance_id"] = instance_id
+        root["object_id"] = object_id
+        root["scene_revision"] = scene_revision
+        root["generator_scene_revision"] = SCENE_REVISION
+        root["role"] = role
+        root["removable"] = removable
+        root["source_id"] = source_id
+        root["confidence"] = confidence
+        root["placement_basis"] = placement_basis
+        root["provenance"] = {
+            "source_id": source_id or "",
+            "confidence": confidence or "",
+            "placement_basis": placement_basis or "",
+        }
+        root["pose_basis"] = pose_basis
+        root["generated_pivot_m"] = {
+            "x": round(float(generated_pivot.x), 6),
+            "y": round(float(generated_pivot.y), 6),
+            "z": 0.0,
+        }
+        root["semantic_anchor_node"] = anchor.name if anchor is not None else "aggregate_bounds"
+        root["generated_baseline_yaw_deg"] = baseline_yaw
+        root["stable_node_id"] = instance_id
+        group = furniture_identity(nodes[0].name)[0]
+        root["furniture_group"] = group
+        root["movable"] = group in MOVABLE_FURNITURE_PREFIXES
+        # Newly assigned empty transforms are not guaranteed to have reached
+        # matrix_world until the depsgraph updates. Parenting before this point
+        # doubled the instance translation in exported GLBs.
+        bpy.context.view_layer.update()
+        for node in nodes:
+            wall_id = attached_wall_id(node)
+            if wall_id:
+                node["wall_id"] = wall_id
+            _parent_keep(node, root)
+
+
+def annotate_scene_metadata(room):
+    """Add stable semantic IDs without changing the load-bearing node names."""
+    wall_roles = {
+        "wall_entry": "entry",
+        "wall_back_window": "window",
+        "wall_left": "left",
+        "wall_right": "right",
+    }
+    scene_revision = (room.get("visualization_scene") or {}).get(
+        "revision", SCENE_REVISION
+    )
+    for obj in bpy.data.objects:
+        if obj.type != "MESH":
+            continue
+        obj["scene_revision"] = scene_revision
+        obj["generator_scene_revision"] = SCENE_REVISION
+        obj["stable_node_id"] = obj.name
+        group, instance_id = furniture_identity(obj.name)
+        if group:
+            obj["furniture_group"] = group
+            obj["instance_id"] = instance_id
+            obj["movable"] = group in MOVABLE_FURNITURE_PREFIXES
+        if obj.name in wall_roles:
+            obj["wall_id"] = obj.name
+            obj["wall_role"] = wall_roles[obj.name]
+        else:
+            wall_id = obj.get("wall_id") or attached_wall_id(obj)
+            if wall_id:
+                obj["wall_id"] = wall_id
+
+
+def world_bounds(obj):
+    corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return (
+        Vector(tuple(min(point[axis] for point in corners) for axis in range(3))),
+        Vector(tuple(max(point[axis] for point in corners) for axis in range(3))),
+    )
+
+
+def aggregate_bounds(objects):
+    objects = list(objects)
+    if not objects:
+        return None
+    bounds = [world_bounds(obj) for obj in objects]
+    return (
+        Vector(tuple(min(item[0][axis] for item in bounds) for axis in range(3))),
+        Vector(tuple(max(item[1][axis] for item in bounds) for axis in range(3))),
+    )
+
+
+def overlap_depth(first, second):
+    first_min, first_max = world_bounds(first)
+    second_min, second_max = world_bounds(second)
+    return Vector(tuple(
+        min(first_max[axis], second_max[axis])
+        - max(first_min[axis], second_min[axis])
+        for axis in range(3)
+    ))
+
+
+def root_local_bounds(root, obj):
+    """Return a mesh AABB in its stable instance root's coordinate space."""
+    inverse = root.matrix_world.inverted()
+    corners = [inverse @ (obj.matrix_world @ Vector(corner)) for corner in obj.bound_box]
+    return (
+        Vector(tuple(min(point[axis] for point in corners) for axis in range(3))),
+        Vector(tuple(max(point[axis] for point in corners) for axis in range(3))),
+    )
+
+
+def aggregate_root_local_bounds(root, objects):
+    bounds = [root_local_bounds(root, obj) for obj in objects]
+    if not bounds:
+        return None
+    return (
+        Vector(tuple(min(item[0][axis] for item in bounds) for axis in range(3))),
+        Vector(tuple(max(item[1][axis] for item in bounds) for axis in range(3))),
+    )
+
+
+def _local_box_payload(collider_id, bounds):
+    minimum, maximum = bounds
+    return {
+        "id": collider_id,
+        "center_m": {
+            "x": round(float((minimum.x + maximum.x) / 2), 6),
+            "y": round(float((minimum.y + maximum.y) / 2), 6),
+            "z": round(float((minimum.z + maximum.z) / 2), 6),
+        },
+        "size_m": {
+            "width": round(float(maximum.x - minimum.x), 6),
+            "depth": round(float(maximum.y - minimum.y), 6),
+            "height": round(float(maximum.z - minimum.z), 6),
+        },
+    }
+
+
+def write_collider_manifest(room, _schema_path, output_path):
+    """Write deterministic root-local box colliders for planner instances.
+
+    Each component mesh contributes one conservative AABB in the corresponding
+    stable root's local room-coordinate frame. Keeping the canonical root pose
+    out of these boxes lets the browser move and rotate an instance without
+    rebuilding its collision geometry.
+    """
+    meshes = sorted(
+        (obj for obj in bpy.data.objects if obj.type == "MESH"),
+        key=lambda obj: obj.name,
+    )
+    by_instance = {}
+    for obj in meshes:
+        instance_id = obj.get("instance_id")
+        if instance_id:
+            by_instance.setdefault(instance_id, []).append(obj)
+
+    instances = []
+    for instance_id, nodes in sorted(by_instance.items()):
+        root = bpy.data.objects.get(instance_id)
+        if root is None or root.get("pose_basis") != "visualization_scene":
+            continue
+        instances.append({
+            "instance_id": instance_id,
+            "colliders": [
+                _local_box_payload(obj.name, root_local_bounds(root, obj))
+                for obj in sorted(nodes, key=lambda item: item.name)
+            ],
+        })
+
+    payload = {
+        "manifest_version": 1,
+        "room_id": room.get("room_id"),
+        "scene_revision": (room.get("visualization_scene") or {}).get(
+            "revision", SCENE_REVISION
+        ),
+        "asset_sha256": None,
+        "instances": instances,
+    }
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Saved collider manifest: {output_path}")
+
+
 # --------------------------------------------------------------------------
 # Geometry helper — beveled, UV-projected, textured, metadata-baked box
 # --------------------------------------------------------------------------
@@ -910,10 +1263,10 @@ def _boolean_cut(target, cutter):
 
 
 def _parent_keep(child, parent):
-    """Parent child to a wall with keep-transform so it hides with the wall in
-    the dollhouse view (constraint 3)."""
+    """Parent a component to its stable owner without changing world pose."""
+    world = child.matrix_world.copy()
     child.parent = parent
-    child.matrix_parent_inverse = parent.matrix_world.inverted()
+    child.matrix_world = world
 
 
 def _uv_stretch_xz(obj):
@@ -1162,8 +1515,19 @@ def build_openings(room, mats, W, D, H, wall_objs, shell_props):
                 _parent_keep(fin, rad_wall)
 
         if is_standard_double(room):
-            rad_w = min(win_wx * 0.35, 1.30)
-            rad_offset = win_wx * 0.25
+            # Keep both convectors inside the clear centre strip between the
+            # two bed-head frames. The earlier 35%-wide pair clipped the inner
+            # head posts after the source-backed shell estimate became narrower.
+            bed = next(
+                (obj for obj in room["objects"] if obj["type"] == "twin_xl_bed"),
+                None,
+            )
+            (_, bed_w, _), _ = object_dimensions(bed or {}, (2.03, 0.99, 0.75))
+            bed_inner_x = W / 2 - WALL_T / 2 - 0.02 - bed_w
+            centre_half = max(0.30, bed_inner_x - 0.035)
+            rad_gap = 0.08
+            rad_w = min(win_wx * 0.28, (2 * centre_half - rad_gap) / 2, 0.68)
+            rad_offset = rad_gap / 2 + rad_w / 2
             radiator_group("left", -rad_offset, rad_w, 9)
             radiator_group("right", rad_offset, rad_w, 9)
             aggregate_left = -rad_offset - rad_w / 2
@@ -1625,11 +1989,12 @@ def build_chairs_and_desks(room, mats, W, D):
                   face=+1, axis="x", record_desk1=(j == 0),
                   hutch=True, hutch_h=hutch_h, hutch_inline=False)
             if chair:
-                # extra tuck: the window-side nook chair's pulled-out casters
-                # otherwise graze the window-wall desk's side panel corner
+                # The entry-side chair sits beside the loft ladder, so tuck it
+                # fully under the desktop. The window-side chair needs only the
+                # smaller clearance used for the window-wall desk corner.
                 _tuck_chair(j + 1, udesk_px, uy, nook_desk_wl, chair_wl,
                             mats, cprops(), face=+1, axis="x",
-                            extra_pullback=0.06)
+                            extra_pullback=(0.14 if j == 0 else 0.06))
         if hutch_h > 0:
             _continuous_hutch(udesk_px, u_positions[0], u_positions[1], nook_desk_wl,
                                mats, dprops(), face=+1, hutch_h=hutch_h, axis="x")
@@ -2378,6 +2743,53 @@ def _build_open_double_closet(
     _apply_props(globe, light_props)
 
 
+def _build_open_triple_closet(idx, px, py, cx, cy, cz, mats, props):
+    """Open white built-in bay used by the canonical published triple.
+
+    The official entrance/interior views show two recessed open storage bays,
+    not freestanding closed wardrobes. Exact internal fittings are unmeasured,
+    so this stays deliberately simple: shell, one shelf, and one hanging rod.
+    """
+    e = CONTACT_EPS
+    t = 0.04
+    kick_h = 0.06
+    inner_w = cx - 2 * t
+    beveled_box(
+        f"closet_{idx}_kick", (cx, cy, kick_h),
+        (px, py, e + kick_h / 2), mats["paint_wall"],
+        "BuiltIns", props, uv_tile=0.5,
+    )
+    beveled_box(
+        f"closet_{idx}_alcove_back", (inner_w, t, cz - kick_h),
+        (px, py - cy / 2 + t / 2, e + kick_h + (cz - kick_h) / 2),
+        mats["paint_wall"], "BuiltIns", props, uv_tile=0.6,
+    )
+    for tag, sx in (("left", -1.0), ("right", 1.0)):
+        beveled_box(
+            f"closet_{idx}_alcove_{tag}", (t, cy, cz - kick_h),
+            (px + sx * (cx / 2 - t / 2), py,
+             e + kick_h + (cz - kick_h) / 2),
+            mats["paint_wall"], "BuiltIns", props, uv_tile=0.6,
+        )
+    beveled_box(
+        f"closet_{idx}_alcove_top", (inner_w, cy, t),
+        (px, py, e + cz - t / 2), mats["paint_wall"],
+        "BuiltIns", props, uv_tile=0.5,
+    )
+    shelf_z = min(cz - 0.24, 1.70)
+    beveled_box(
+        f"closet_{idx}_upper_shelf", (inner_w - 0.03, cy - 0.08, 0.025),
+        (px, py, shelf_z), mats["laminate_light"],
+        "BuiltIns", props, uv_tile=0.45,
+    )
+    _cyl(
+        f"closet_{idx}_hanging_rod", 0.014, inner_w - 0.10,
+        (px, py + cy * 0.18, shelf_z - 0.16), mats["metal_brushed"],
+        props, rot=(0, math.radians(90), 0), verts=14,
+        collection="BuiltIns",
+    )
+
+
 def _build_one_closet(idx, px, py, cx, cy, cz, mats, props):
     """One closet carcass + two doors + handles at (px, py). Shared by both the
     symmetric flank-the-entry placement and the single-side fallback."""
@@ -2500,24 +2912,26 @@ def build_storage(room, mats, W, D):
         else:
             # TRIPLE (door hugs the left corner): both closets stack along
             # the entry wall right of the door — "two closets built into the
-            # interior wall to the right of the door". dresser_1 takes the
-            # wall run right of them (see the dresser pass; its drawers then
-            # open into the room), and the Microchill moves to the right
-            # wall's entry band, so no shelf column here — the triple's
-            # bookshelves are the under-loft hutches (official room photo).
+            # interior wall to the right of the door". Use open recessed bays,
+            # matching the published entrance view. Both dressers now sit at
+            # the bed feet, leaving the remaining entry-wall slot for the
+            # shared Microchill instead of crowding the bunk-side aisle.
             door_right = door_cx + door_half + 0.02
             px1 = door_right + cx / 2
-            _build_one_closet(1, px1, py, cx, cy, cz, mats, props)
+            _build_open_triple_closet(1, px1, py, cx, cy, cz, mats, props)
             run = px1 + cx / 2
             if count >= 2:
                 px2 = run + 0.02 + cx / 2
-                _build_one_closet(2, px2, py, cx, cy, cz, mats, props)
+                _build_open_triple_closet(2, px2, py, cx, cy, cz, mats, props)
                 run = px2 + cx / 2
                 for i in range(2, count):
                     px = run + 0.04 + cx / 2 + (i - 2) * (cx + 0.04)
-                    _build_one_closet(i + 1, px, py, cx, cy, cz, mats, props)
+                    _build_open_triple_closet(i + 1, px, py, cx, cy, cz, mats, props)
                     run = px + cx / 2
             closets_right_edge = run
+            room_right = W / 2 - WALL_T - 0.02
+            if micro and run + 0.04 + mi_w <= room_right:
+                micro_slot = (run + 0.04 + mi_w / 2, py)
 
     # ---- Dressers ----
     dresser = next((o for o in room["objects"] if o["type"] == "dresser"), None)
@@ -2537,26 +2951,23 @@ def build_storage(room, mats, W, D):
         props = custom_props(room, dresser, status)
         count = dresser.get("count", 1)
         if has_loft:
-            # Triple: dresser_1 stands along the ENTRY wall right of the
-            # closet run, drawers opening into the room (near the bunk's
-            # foot corner — "a dresser is at the foot of the bunk bed").
-            # dresser_2 sits in the LOFT-FOOT corner against the left wall,
-            # drawers facing the room — the spot the official view shows;
-            # the enlarged shell (and the loft ladder moving to the bed's
-            # side) makes it clear of the 0.9 m door swing, which the
-            # generator still clamps for explicitly.
+            # Triple: one low dresser sits immediately entry-side of each bed
+            # foot against its side wall. This directly matches the published
+            # top view and keeps both chests out of the entry storage run.
             loft = next((o for o in room["objects"] if o["type"] == "loft_bed"), None)
+            bunk = next((o for o in room["objects"] if o["type"] == "bunk_bed"), None)
             (lbx2, _, _), _ = object_dimensions(loft or {}, (2.03, 0.99, 1.75))
+            (bbx2, bby2, _), _ = object_dimensions(bunk or {}, (2.03, 0.99, 1.75))
             loft_foot_y = bed_head_at_window_y(D, lbx2) - lbx2 / 2
-            px = ((closets_right_edge + 0.04 + dw / 2)
-                  if closets_right_edge is not None else W / 2 - WALL_T - dw / 2 - 0.04)
-            y1 = -D / 2 + WALL_T / 2 + 0.02 + CONTACT_EPS + dd / 2
-            px2 = -(W / 2 - WALL_T / 2 - 0.02 - CONTACT_EPS - dd / 2)
-            py2 = loft_foot_y - 0.01 - dw / 2
-            py2 = max(py2, -(D / 2 - WALL_T / 2) + DOOR_SWING_CLEAR + dw / 2 + 0.01)
+            bunk_foot_y = bed_head_at_window_y(D, bbx2) - bbx2 / 2
+            side_x = W / 2 - WALL_T / 2 - 0.02 - CONTACT_EPS - dd / 2
+            foot_gap = 0.055
             slots = [
-                (px, y1, +1, "y"),
-                (px2, py2, +1, "x"),
+                # Bunk dresser is perpendicular to the bed and aligned with its
+                # foot, leaving the entry-wall Microchill corner unobstructed.
+                (W / 2 - WALL_T / 2 - 0.10 - bby2 / 2,
+                 bunk_foot_y - foot_gap - dd / 2, +1, "y"),
+                (-side_x, loft_foot_y - foot_gap - dw / 2, +1, "x"),
             ]
         else:
             # Double representative: the published view suggests low storage
@@ -2566,7 +2977,13 @@ def build_storage(room, mats, W, D):
             # 2D plan deliberately omits these unverified placements.
             layout = _twin_bed_layout(room, W, D)
             foot_y = layout["foot_y"]                    # entry-side end of the beds
-            dresser_y = foot_y - 0.02 - dd / 2           # just past the bed foot
+            # Include drawer-front and knob projection plus a visible gap;
+            # the old 20 mm allowance let the knobs clip the bed-foot frame.
+            # Keep a 10 mm gap behind the chest as well as clearance at the
+            # bed-facing drawer knobs. The former placement left a 5 mm
+            # overlap with the open closet's proud drawer handles once both
+            # detailed root-local collider sets were evaluated.
+            dresser_y = foot_y - 0.055 - dd / 2
             px_wall = W / 2 - WALL_T / 2 - 0.02 - CONTACT_EPS - dw / 2
             slots = [
                 (-px_wall, dresser_y, +1, "y"),
@@ -2640,11 +3057,12 @@ def build_storage(room, mats, W, D):
             body_sz = (my, mx, mz)
         beveled_box("microchill_1_body", body_sz, (px, py, e + mz / 2),
                     mats["metal_brushed"], "Furniture", props, uv_tile=0.5)
-        if is_standard_double(room):
+        if is_standard_double(room) or has_loft:
             # A Microchill is a combination refrigerator + microwave, not one
             # featureless tall refrigerator. Preserve the established body,
             # door and handle names for grouping while splitting the facade
-            # into an unmistakable lower fridge and upper microwave.
+            # into an unmistakable lower fridge and upper microwave in both
+            # current Unit 3 room types.
             fridge_h = mz * 0.62
             unit_gap = 0.035
             microwave_h = mz - fridge_h - unit_gap - 0.04
@@ -3291,6 +3709,7 @@ def _name_is_known(name):
 def validate_scene(room):
     errors = []
     mesh_objs = [o for o in bpy.data.objects if o.type == "MESH"]
+    by_name = {o.name: o for o in mesh_objs}
     object_names = {o.name for o in bpy.data.objects}
 
     for required in ["floor", "ceiling", "wall_entry", "wall_back_window"]:
@@ -3324,6 +3743,111 @@ def validate_scene(room):
         missing = required_keys - set(o.keys())
         if missing:
             errors.append(f"{o.name} missing custom props: {sorted(missing)}")
+        expected_scene_revision = (room.get("visualization_scene") or {}).get(
+            "revision", SCENE_REVISION
+        )
+        if o.get("scene_revision") != expected_scene_revision:
+            errors.append(f"{o.name} missing current scene revision metadata")
+        if o.get("stable_node_id") != o.name:
+            errors.append(f"{o.name} missing stable node id metadata")
+
+    # One top-level root per generated instance. No instance component is
+    # allowed to remain flat at scene root, which makes transforms ambiguous.
+    generated_instance_ids = sorted({
+        obj.get("instance_id") for obj in mesh_objs if obj.get("instance_id")
+    })
+    scene_instances = {
+        item["id"]: item
+        for item in (room.get("visualization_scene") or {}).get("instances", [])
+    }
+    for instance_id in generated_instance_ids:
+        root = bpy.data.objects.get(instance_id)
+        if root is None or root.type != "EMPTY":
+            errors.append(f"Missing stable instance root: {instance_id}")
+            continue
+        if root.parent is not None:
+            errors.append(f"Instance root must be top-level: {instance_id}")
+        if root.get("instance_id") != instance_id:
+            errors.append(f"Instance root missing identity metadata: {instance_id}")
+        components = [
+            obj for obj in mesh_objs if obj.get("instance_id") == instance_id
+        ]
+        for component in components:
+            parent = component.parent
+            if parent is not root:
+                errors.append(
+                    f"Instance component {component.name} is not parented to {instance_id}"
+                )
+        local_bounds = aggregate_root_local_bounds(root, components)
+        if local_bounds is not None:
+            local_center = (local_bounds[0] + local_bounds[1]) / 2
+            # Ladders, handles and other asymmetric projections may bias the
+            # complete AABB, but a root pivot far outside the body is never a
+            # useful rotate/drag origin.
+            if abs(local_center.x) > 0.25 or abs(local_center.y) > 0.25:
+                errors.append(
+                    f"Instance root pivot is not centered: {instance_id} "
+                    f"({local_center.x:.6f}, {local_center.y:.6f})"
+                )
+        anchor_name = root.get("semantic_anchor_node")
+        anchor = by_name.get(anchor_name) if anchor_name != "aggregate_bounds" else None
+        if anchor is not None:
+            anchor_local = root.matrix_world.inverted() @ anchor.matrix_world.translation
+            if abs(anchor_local.x) > 1e-5 or abs(anchor_local.y) > 1e-5:
+                errors.append(
+                    f"Instance semantic anchor drifted from root: {instance_id}"
+                )
+        schema_instance = scene_instances.get(instance_id)
+        if schema_instance:
+            pose = schema_instance["pose"]
+            expected_position = Vector(tuple(
+                float(pose["position_m"][axis]) for axis in ("x", "y", "z")
+            ))
+            if (root.location - expected_position).length > 1e-6:
+                errors.append(f"Instance root pose drifted from schema: {instance_id}")
+            expected_rotation = tuple(
+                math.radians(float(pose["rotation_deg"][axis]))
+                for axis in ("x", "y", "z")
+            )
+            if any(
+                abs(root.rotation_euler[index] - expected_rotation[index]) > 1e-6
+                for index in range(3)
+            ):
+                errors.append(f"Instance root rotation drifted from schema: {instance_id}")
+
+    def prefixed(prefix):
+        return [obj for obj in mesh_objs if obj.name.startswith(prefix)]
+
+    def collision(first_nodes, second_nodes, tolerance=0.004):
+        for first in first_nodes:
+            for second in second_nodes:
+                depth = overlap_depth(first, second)
+                if min(depth) > tolerance:
+                    return first.name, second.name, depth
+        return None
+
+    # Every floor-standing instance must actually reach the floor. This catches
+    # the subtle "floating furniture" regressions that contact shadows can hide.
+    support_groups = (
+        "twin_xl_bed", "loft_bed", "bunk_bed", "desk", "chair",
+        "dresser", "closet", "microchill",
+    )
+    instance_ids = sorted({
+        obj.get("instance_id")
+        for obj in mesh_objs
+        if obj.get("furniture_group") in support_groups and obj.get("instance_id")
+    })
+    for instance_id in instance_ids:
+        bounds = aggregate_bounds(
+            obj for obj in mesh_objs if obj.get("instance_id") == instance_id
+        )
+        if bounds is None:
+            continue
+        floor_clearance = float(bounds[0].z)
+        if floor_clearance < -0.003 or floor_clearance > 0.012:
+            errors.append(
+                f"{instance_id} has invalid floor clearance {floor_clearance:.4f} m"
+            )
 
     # Decor discipline: exactly the decor_* nodes carry decorative=true, and
     # every decor_* node carries the correct attached_to (or none for
@@ -3356,8 +3880,6 @@ def validate_scene(room):
     # structural (names/transforms/counts), so a future polish pass cannot
     # silently regress the layout into the disproven hybrid configuration.
     if is_standard_double(room):
-        by_name = {o.name: o for o in mesh_objs}
-
         def require(name):
             obj = by_name.get(name)
             if obj is None:
@@ -3384,7 +3906,7 @@ def validate_scene(room):
         if desk_1 and desk_2:
             p1 = desk_1.matrix_world.translation
             p2 = desk_2.matrix_world.translation
-            if abs(p1.x - p2.x) > 0.01 or abs(p1.x) > 0.01:
+            if abs(p1.x - p2.x) > 0.001 or abs(p1.x) > 0.001:
                 errors.append(
                     f"Double desks must share x=0 (got {p1.x:.3f}, {p2.x:.3f})"
                 )
@@ -3422,6 +3944,14 @@ def validate_scene(room):
             ]
             if curtain and any(overlaps(curtain, part) for part in radiator_parts):
                 errors.append(f"Double curtain {side} intersects its radiator")
+            bed_nodes = prefixed(
+                f"twin_xl_bed_{1 if side == 'left' else 2}_"
+            )
+            hit = collision(radiator_parts, bed_nodes)
+            if hit:
+                errors.append(
+                    f"Double radiator/bed collision: {hit[0]} intersects {hit[1]}"
+                )
 
         for idx in (1, 2):
             for name in (
@@ -3502,6 +4032,84 @@ def validate_scene(room):
         if floor and (not floor.data.materials or floor.data.materials[0].name != "carpet_charcoal"):
             errors.append("Double floor must use the charcoal/brown carpet material")
 
+        for idx in (1, 2):
+            hit = collision(
+                prefixed(f"dresser_{idx}_drawer_"),
+                prefixed(f"twin_xl_bed_{idx}_"),
+                tolerance=0.002,
+            )
+            if hit:
+                errors.append(
+                    f"Double dresser/bed collision: {hit[0]} intersects {hit[1]}"
+                )
+            hit = collision(
+                prefixed(f"dresser_{idx}_"),
+                prefixed(f"closet_{idx}_"),
+                tolerance=0.002,
+            )
+            if hit:
+                errors.append(
+                    f"Double dresser/closet collision: {hit[0]} intersects {hit[1]}"
+                )
+    else:
+        # Canonical triple contact/clearance invariants. In particular, the
+        # loft ladder must not pass through either under-loft task chair.
+        for idx in (1, 2):
+            for name in (
+                f"closet_{idx}_alcove_back",
+                f"closet_{idx}_alcove_left",
+                f"closet_{idx}_alcove_right",
+                f"closet_{idx}_upper_shelf",
+                f"closet_{idx}_hanging_rod",
+            ):
+                if name not in by_name:
+                    errors.append(f"Triple invariant missing open storage node: {name}")
+            if any(obj.name.startswith(f"closet_{idx}_door_") for obj in mesh_objs):
+                errors.append(f"Triple closet {idx} regressed to a closed wardrobe")
+
+        for name in (
+            "microchill_1_door",
+            "microchill_1_microwave_face",
+            "microchill_1_microwave_window",
+        ):
+            if name not in by_name:
+                errors.append(f"Triple invariant missing Microchill part: {name}")
+
+        ladder_chair = collision(
+            prefixed("loft_bed_1_ladder_"),
+            prefixed("chair_"),
+            tolerance=0.003,
+        )
+        if ladder_chair:
+            errors.append(
+                f"Triple ladder/chair collision: {ladder_chair[0]} intersects "
+                f"{ladder_chair[1]} by {tuple(round(v, 4) for v in ladder_chair[2])} m"
+            )
+        for dresser_idx, bed_prefix in ((1, "bunk_bed_1_"), (2, "loft_bed_1_")):
+            hit = collision(
+                prefixed(f"dresser_{dresser_idx}_"),
+                prefixed(bed_prefix),
+                tolerance=0.003,
+            )
+            if hit:
+                errors.append(
+                    f"Triple dresser/bed collision: {hit[0]} intersects {hit[1]}"
+                )
+        hit = collision(
+            prefixed("microchill_1_"),
+            prefixed("dresser_") + prefixed("closet_") + prefixed("bunk_bed_1_"),
+            tolerance=0.003,
+        )
+        if hit:
+            first_obj = by_name[hit[0]]
+            second_obj = by_name[hit[1]]
+            errors.append(
+                f"Triple Microchill/storage collision: {hit[0]} intersects {hit[1]} "
+                f"by {tuple(round(v, 4) for v in hit[2])} m "
+                f"at {tuple(round(v, 3) for v in first_obj.location)} / "
+                f"{tuple(round(v, 3) for v in second_obj.location)}"
+            )
+
     print("\nMODEL VALIDATION")
     print(f"  mesh objects: {len(mesh_objs)}")
     print(f"  decor meshes: {len(decor_meshes)}")
@@ -3547,6 +4155,8 @@ def build(room):
     build_storage(room, mats, W, D)
     build_decor(room, mats, W, D)
     add_lighting(room, W, D, H)
+    create_instance_roots(room)
+    annotate_scene_metadata(room)
     return validate_scene(room)
 
 
@@ -3574,6 +4184,12 @@ def main():
         export_yup=True,
         export_extras=True,
     )
+    manifest_path = (
+        Path(args.collider_manifest)
+        if args.collider_manifest
+        else glb_path.with_suffix(".colliders.json")
+    )
+    write_collider_manifest(room, schema_path, manifest_path)
     print(f"Saved Blender file: {blend_path}")
     print(f"Saved GLB: {glb_path}")
 

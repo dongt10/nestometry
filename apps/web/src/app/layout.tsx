@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import '../styles/globals.css';
 
 export const metadata = {
-  title: 'Nestometry',
-  description: 'Source-backed dorm rooms in 2D and 3D.'
+  title: 'nestometry',
+  description: 'source-backed dorm rooms for planning in 2d and 3d.'
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

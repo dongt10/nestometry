@@ -12,13 +12,22 @@ The long-term goal is a community-built visual catalog of UC Berkeley residence 
 
 The current two-room Unit 3 dataset is a foundation, not a complete housing catalog. Models and estimates must never be treated as fit guarantees: room assignments vary, exact dimensions are often unavailable, and students should verify fit-critical measurements with UC Berkeley Housing or an authorized on-site measurement.
 
+## Planner preview
+
+![Nestometry planner showing the Unit 3 representative triple in 3D](docs/images/nestometry-planner-desktop.png)
+
+The minimal planner keeps the representative room visible while room browsing, evidence details, layers, arranging, inventory, and sharing stay in focused drawers. On mobile, the same scene and plan tools use full-screen sheets and a persistent bottom dock.
+
+<img src="docs/images/nestometry-planner-mobile.png" alt="Nestometry mobile planner showing the editable Unit 3 floor plan" width="390" />
+
 ## What it does
 
-- Loads optimized GLB room models in a browser-based Three.js viewer.
-- Switches between orbit, top-down, and first-person views.
-- Shows furniture groups and honest dimension badges.
-- Supports session-only furniture arrangement and reset.
-- Preserves room, view, and display state in a shareable URL.
+- Loads optimized GLB room models in a full-screen browser planner.
+- Switches between free orbit, an editable architectural 2D plan, and first-person walk views.
+- Moves and rotates supplied furniture in 2D or 3D with optional 5 cm snapping and undo/redo.
+- Adds custom dimension blocks, removes restorable furniture to an inventory tray, and surfaces advisory collision, wall, door-swing, and access-zone warnings.
+- Saves compatible plans locally and creates explicit compressed, editable share links without uploading plan data.
+- Provides remembered imperial/metric, layer, camera, staging, and render-quality preferences per room.
 - Displays source provenance, confidence, accuracy tier, and Berkeley's room-variation warning.
 
 The checked-in rooms are `official_representative`. No official drawings or authorized measurements have been obtained. Exact `room_shell` dimensions therefore remain `unknown`; separately sourced `visualization_shell` estimates drive geometry and are never presented as verified measurements.
@@ -64,6 +73,20 @@ corepack pnpm build
 corepack pnpm test:e2e
 ```
 
+The hardware-dependent 3D arrange benchmark is intentionally separate from
+`verify`. After `corepack pnpm build`, serve the production app on its benchmark
+port in one terminal and run the headed Chromium probe in another:
+
+```bash
+corepack pnpm --filter @nestometry/web start --hostname 127.0.0.1 --port 3217
+corepack pnpm benchmark:arrange
+```
+
+It measures a real 3D drag for at least 10 seconds and verifies that automatic
+quality can downgrade without making the planner unresponsive. Use
+`PERF_HEADLESS=1` only to exercise fallback behavior in automation; headless
+GPU timing is not a release performance measurement.
+
 ## Regenerating the models
 
 The generated geometry and textures are original, procedural output from the Blender Python generator. Reference images, virtual-tour panoramas, and copied source textures are not distributed.
@@ -74,17 +97,21 @@ The current artifacts were verified with Blender 5.1.1. Set `BLENDER_BIN` when B
 BLENDER_BIN=/path/to/blender corepack pnpm demo:unit3
 ```
 
-This validates both room records, rebuilds the `.blend` and optimized `.glb` files, copies the public GLBs, and builds the web app. See [packages/blender-generators/README.md](packages/blender-generators/README.md) for the geometry and naming contracts.
+This validates both room records, rebuilds the `.blend`, optimized `.glb`, and
+derived collider files, copies the public runtime assets, and builds the web
+app. See [packages/blender-generators/README.md](packages/blender-generators/README.md)
+for the geometry and naming contracts.
 
 ## Repository layout
 
 ```text
-apps/web/                         Next.js viewer and browser tests
+apps/web/                         Next.js planner and browser tests
 packages/room-schema/             Zod room-data contract
 packages/berkeley-data/           Room records and source ledger
 packages/blender-generators/      Procedural Blender generator
 assets/blend/                     Editable generated Blender files
 assets/glb/                       Optimized source GLBs
+assets/colliders/                 Generated per-instance collision manifests
 apps/web/public/models/           Public runtime GLB copies
 docs/                             Accuracy and source-use policies
 research/                         Public research notes and measurement backlog
@@ -111,7 +138,15 @@ Read [docs/data-accuracy-tiers.md](docs/data-accuracy-tiers.md), [docs/legal-and
 
 ## Security and privacy
 
-The viewer has no accounts, analytics, uploads, application backend, or client-side tracking. A deployment provider may still collect standard request logs under its own policy. Report security issues privately as described in [SECURITY.md](SECURITY.md).
+The planner has no accounts, analytics, uploads, application backend, or
+client-side tracking. Compatible plans are autosaved per room in browser local
+storage. Explicit share links contain the compressed plan—including custom item
+labels—in the URL fragment, so it is not sent in ordinary HTTP requests to
+Nestometry. Anyone who receives a link can still decode and edit that plan, and
+browsers, synced history, clipboards, or messaging apps may retain the full URL.
+Do not put personal or sensitive information in custom labels. A deployment
+provider may still collect standard request logs under its own policy. Report
+security issues privately as described in [SECURITY.md](SECURITY.md).
 
 ## Contributing
 

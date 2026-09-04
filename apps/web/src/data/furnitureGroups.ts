@@ -32,18 +32,18 @@ export const DECOR_GROUP = 'decor' satisfies FurnitureGroup;
 
 /** Human-readable labels for the toggle checkboxes. */
 export const FURNITURE_GROUP_LABELS: Record<FurnitureGroup, string> = {
-  twin_xl_bed: 'Twin XL beds',
-  loft_bed: 'Loft bed',
-  bunk_bed: 'Bunk bed',
-  microchill: 'Microchill',
-  bookshelf: 'Bookshelves',
-  dresser: 'Dressers',
-  closet: 'Closets',
-  window: 'Windows',
-  decor: 'Decor',
-  desk: 'Desks',
-  chair: 'Chairs',
-  door: 'Doors'
+  twin_xl_bed: 'twin xl beds',
+  loft_bed: 'loft bed',
+  bunk_bed: 'bunk bed',
+  microchill: 'microchill',
+  bookshelf: 'bookshelves',
+  dresser: 'dressers',
+  closet: 'closets',
+  window: 'windows',
+  decor: 'decor',
+  desk: 'desks',
+  chair: 'chairs',
+  door: 'doors'
 };
 
 /**
@@ -180,4 +180,45 @@ export function collectFurnitureGroups(root: Object3D | Object3D[]): Map<Furnitu
 
   for (const node of roots) visit(node);
   return groups;
+}
+
+/**
+ * Apply the two independent visibility controls as one operation so an
+ * inventory update can never re-show a hidden layer (or vice versa). Decor
+ * attached to removed furniture is hidden with its parent even though the GLB
+ * stores those staging meshes as separate top-level nodes.
+ */
+export function applyFurnitureVisibility(
+  groups: ReadonlyMap<FurnitureGroup, readonly Object3D[]>,
+  hiddenGroups: ReadonlySet<FurnitureGroup>,
+  removedInstanceIds: ReadonlySet<string>,
+  knownInstanceIds: ReadonlySet<string>
+): void {
+  const decorHidden = hiddenGroups.has(DECOR_GROUP);
+  for (const [group, nodes] of groups) {
+    if (group === DECOR_GROUP) {
+      for (const node of nodes) {
+        const attachedTo = node.userData?.attached_to;
+        const attachedGroup =
+          typeof attachedTo === 'string'
+            ? groupForNodeName(attachedTo) ?? (attachedTo as FurnitureGroup)
+            : null;
+        const attachedInstance = decorRideAlongInstance(node.name, knownInstanceIds);
+        node.visible =
+          !decorHidden &&
+          !(attachedGroup && hiddenGroups.has(attachedGroup)) &&
+          !(attachedInstance && removedInstanceIds.has(attachedInstance));
+      }
+      continue;
+    }
+
+    const groupVisible = !hiddenGroups.has(group);
+    for (const node of nodes) {
+      const instanceId =
+        typeof node.userData?.instance_id === 'string'
+          ? node.userData.instance_id
+          : node.name;
+      node.visible = groupVisible && !removedInstanceIds.has(instanceId);
+    }
+  }
 }

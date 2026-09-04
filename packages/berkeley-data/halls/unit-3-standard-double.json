@@ -1,5 +1,6 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
+  "room_id": "unit-3-standard-double",
   "school": "UC Berkeley",
   "hall": "Unit 3",
   "building": null,
@@ -126,28 +127,441 @@
   "visualization_shell": {
     "width": {
       "value_m": 4.115,
+      "uncertainty_m": 0.3048,
       "status": "estimated",
       "estimated": true,
       "source_id": "unit3_interior_model_pack_2026_07",
       "confidence": "medium",
-      "notes": "Visualization-only 13 ft 6 in room-width estimate from the model pack's official-view and Twin XL scale analysis; not a verified Berkeley measurement."
+      "notes": "Visualization-only 13 ft 6 in room-width estimate from the model pack's official-view and Twin XL scale analysis, with ±12 in uncertainty; not a verified Berkeley measurement."
     },
     "depth": {
       "value_m": 3.505,
+      "uncertainty_m": 0.3048,
       "status": "estimated",
       "estimated": true,
       "source_id": "unit3_interior_model_pack_2026_07",
       "confidence": "medium",
-      "notes": "Visualization-only 11 ft 6 in entry-to-window estimate from the model pack's official-view and Twin XL scale analysis; not a verified Berkeley measurement."
+      "notes": "Visualization-only 11 ft 6 in entry-to-window estimate from the model pack's official-view and Twin XL scale analysis, with ±12 in uncertainty; not a verified Berkeley measurement."
     },
     "height": {
       "value_m": 2.44,
+      "uncertainty_m": 0.3048,
       "status": "estimated",
       "estimated": true,
       "source_id": "unit3_interior_model_pack_2026_07",
       "confidence": "medium",
-      "notes": "Visualization-only 8 ft room-height estimate from the Unit 3 interior model pack; not a verified Berkeley measurement."
+      "notes": "Visualization-only 8 ft room-height estimate from the Unit 3 interior model pack, with ±12 in uncertainty; not a verified Berkeley measurement."
     }
+  },
+  "visualization_scene": {
+    "revision": "unit-3-standard-double-canonical-v2",
+    "coordinate_system": {
+      "units": "meters",
+      "origin": "room_center_floor",
+      "handedness": "right_handed",
+      "axes": {
+        "x": "right",
+        "y": "toward_window",
+        "z": "up"
+      }
+    },
+    "cameras": {
+      "orbit": {
+        "position_m": { "x": 5.2, "y": -5.1, "z": 4.2 },
+        "target_m": { "x": 0, "y": 0.15, "z": 0.95 },
+        "fov_deg": 42
+      },
+      "plan": {
+        "position_m": { "x": 0, "y": 0, "z": 7.5 },
+        "target_m": { "x": 0, "y": 0, "z": 0 },
+        "orthographic_size_m": 4.75
+      }
+    },
+    "surfaces": [
+      {
+        "id": "floor",
+        "kind": "floor",
+        "pose": {
+          "position_m": { "x": 0, "y": 0, "z": -0.025 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 4.115, "y": 3.505, "z": 0.05 },
+        "fade_behavior": "never",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Visualization-only floor envelope; dimensions are estimated, not measured."
+      },
+      {
+        "id": "ceiling",
+        "kind": "ceiling",
+        "pose": {
+          "position_m": { "x": 0, "y": 0, "z": 2.465 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 4.115, "y": 3.505, "z": 0.05 },
+        "fade_behavior": "smart_orbit",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Complete in walk mode; may fade in exterior orbit views."
+      },
+      {
+        "id": "wall_entry",
+        "kind": "wall",
+        "pose": {
+          "position_m": { "x": 0, "y": -1.7525, "z": 1.22 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 4.115, "y": 0.08, "z": 2.44 },
+        "fade_behavior": "smart_orbit",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Entry wall may fade only when it obstructs the main orbit view."
+      },
+      {
+        "id": "wall_window",
+        "kind": "wall",
+        "pose": {
+          "position_m": { "x": 0, "y": 1.7525, "z": 1.22 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 4.115, "y": 0.08, "z": 2.44 },
+        "fade_behavior": "never",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Exterior wall remains visible so the canonical centered window stays legible."
+      },
+      {
+        "id": "wall_left",
+        "kind": "wall",
+        "pose": {
+          "position_m": { "x": -2.0575, "y": 0, "z": 1.22 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 0.08, "y": 3.505, "z": 2.44 },
+        "fade_behavior": "smart_orbit",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Side wall may fade only when it obstructs the main orbit view."
+      },
+      {
+        "id": "wall_right",
+        "kind": "wall",
+        "pose": {
+          "position_m": { "x": 2.0575, "y": 0, "z": 1.22 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "size_m": { "x": 0.08, "y": 3.505, "z": 2.44 },
+        "fade_behavior": "smart_orbit",
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "notes": "Side wall may fade only when it obstructs the main orbit view."
+      }
+    ],
+    "instances": [
+      {
+        "id": "door_1",
+        "object_id": "door_1",
+        "instance_index": 1,
+        "label": "Entry door",
+        "role": "built_in",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": 0, "y": -1.7525, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Centered on the entry wall; dimensions and hinge details remain estimated."
+      },
+      {
+        "id": "window_1",
+        "object_id": "window_1",
+        "instance_index": 1,
+        "label": "Exterior window",
+        "role": "built_in",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": 0, "y": 1.7525, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Centered opposite the entry; opening size and sill height remain estimated."
+      },
+      {
+        "id": "twin_xl_bed_1",
+        "object_id": "twin_xl_bed_group",
+        "instance_index": 1,
+        "label": "Left Twin XL bed",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -1.4895, "y": 0.6485, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 90 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Low bed along the left side wall with its head at the window wall."
+      },
+      {
+        "id": "twin_xl_bed_2",
+        "object_id": "twin_xl_bed_group",
+        "instance_index": 2,
+        "label": "Right Twin XL bed",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": 1.4895, "y": 0.6485, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 90 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Low bed along the right side wall with its head at the window wall."
+      },
+      {
+        "id": "desk_1",
+        "object_id": "desk_group",
+        "instance_index": 1,
+        "label": "Window-side desk",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": 0, "y": 1.0465, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 90 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Window-side half of the tandem center desk run, accessed from the left aisle."
+      },
+      {
+        "id": "desk_2",
+        "object_id": "desk_group",
+        "instance_index": 2,
+        "label": "Entry-side desk",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": 0, "y": -0.0255, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 90 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Entry-side half of the tandem center desk run, accessed from the right aisle."
+      },
+      {
+        "id": "chair_1",
+        "object_id": "chair_group",
+        "instance_index": 1,
+        "label": "Left desk chair",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -0.37, "y": 0.876, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 270 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "medium",
+        "placement_basis": "visual_scale_estimate",
+        "notes": "Representative tucked position on the left access side of desk 1."
+      },
+      {
+        "id": "chair_2",
+        "object_id": "chair_group",
+        "instance_index": 2,
+        "label": "Right desk chair",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": 0.37, "y": 0.145, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 90 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "medium",
+        "placement_basis": "visual_scale_estimate",
+        "notes": "Representative tucked position on the right access side of desk 2."
+      },
+      {
+        "id": "dresser_1",
+        "object_id": "dresser_group",
+        "instance_index": 1,
+        "label": "Left dresser",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -1.614, "y": -0.75, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3",
+        "confidence": "low",
+        "placement_basis": "representative_assumption",
+        "notes": "Representative side-wall placement only; Berkeley confirms the dresser but does not publish this exact location. Full hardware bounds retain at least 50 mm from the bed rail."
+      },
+      {
+        "id": "dresser_2",
+        "object_id": "dresser_group",
+        "instance_index": 2,
+        "label": "Right dresser",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": 1.614, "y": -0.75, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3",
+        "confidence": "low",
+        "placement_basis": "representative_assumption",
+        "notes": "Representative side-wall placement only; Berkeley confirms the dresser but does not publish this exact location. Full hardware bounds retain at least 50 mm from the bed rail."
+      },
+      {
+        "id": "closet_1",
+        "object_id": "closet_group",
+        "instance_index": 1,
+        "label": "Left entry closet",
+        "role": "built_in",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": -1.511, "y": -1.385, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Built-in storage flanking the centered entry; fitted width remains estimated."
+      },
+      {
+        "id": "closet_2",
+        "object_id": "closet_group",
+        "instance_index": 2,
+        "label": "Right entry closet",
+        "role": "built_in",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": 1.511, "y": -1.385, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3_double_published_3d",
+        "confidence": "high",
+        "placement_basis": "official_published_3d",
+        "notes": "Built-in storage flanking the centered entry; fitted width remains estimated."
+      },
+      {
+        "id": "bookshelf_1",
+        "object_id": "bookshelf_group",
+        "instance_index": 1,
+        "label": "Left wall bookshelf",
+        "role": "attached",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": -1.895, "y": -0.754, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3",
+        "confidence": "low",
+        "placement_basis": "visual_scale_estimate",
+        "notes": "Berkeley confirms a bookshelf on each side wall. This wall-mounted pose follows the representative dresser band; exact height and offset are unverified."
+      },
+      {
+        "id": "bookshelf_2",
+        "object_id": "bookshelf_group",
+        "instance_index": 2,
+        "label": "Right wall bookshelf",
+        "role": "attached",
+        "removable": false,
+        "pose": {
+          "position_m": { "x": 1.895, "y": -0.754, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3",
+        "confidence": "low",
+        "placement_basis": "visual_scale_estimate",
+        "notes": "Berkeley confirms a bookshelf on each side wall. This wall-mounted pose follows the representative dresser band; exact height and offset are unverified."
+      },
+      {
+        "id": "microchill_1",
+        "object_id": "microchill_1",
+        "instance_index": 1,
+        "label": "Microchill",
+        "role": "movable",
+        "removable": true,
+        "pose": {
+          "position_m": { "x": -0.791, "y": -1.436, "z": 0 },
+          "rotation_deg": { "x": 0, "y": 0, "z": 0 }
+        },
+        "source_id": "berkeley_housing_unit3",
+        "confidence": "low",
+        "placement_basis": "representative_assumption",
+        "notes": "Representative slot beside the left closet; the official furnishing list does not publish an exact location."
+      }
+    ],
+    "clearance_zones": [
+      {
+        "id": "entry_door_swing",
+        "type": "door_swing",
+        "anchor_instance_id": "door_1",
+        "geometry": {
+          "shape": "sector",
+          "center_m": { "x": -0.457, "y": -1.7525 },
+          "radius_m": 0.914,
+          "start_angle_deg": 0,
+          "end_angle_deg": 90
+        },
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "medium",
+        "estimated": true,
+        "notes": "Estimated inward door swing; hinge side and exact arc require field verification."
+      },
+      {
+        "id": "entry_center_access",
+        "type": "circulation",
+        "anchor_instance_id": null,
+        "geometry": {
+          "shape": "rectangle",
+          "center_m": { "x": 0, "y": -1.05 },
+          "size_m": { "width": 0.61, "depth": 0.9 },
+          "rotation_deg": 0
+        },
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "low",
+        "estimated": true,
+        "notes": "Estimated center entry strip between the flanking storage and tandem desk run in the canonical staged pose; advisory only, not a verified egress clearance."
+      },
+      {
+        "id": "left_student_access",
+        "type": "circulation",
+        "anchor_instance_id": null,
+        "geometry": {
+          "shape": "rectangle",
+          "center_m": { "x": -0.775, "y": 0.62 },
+          "size_m": { "width": 0.3, "depth": 1.94 },
+          "rotation_deg": 0
+        },
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "low",
+        "estimated": true,
+        "notes": "Modeled clear strip between the left bed and tucked chair/desk in the canonical staged pose; advisory only, not a verified passage width."
+      },
+      {
+        "id": "right_student_access",
+        "type": "circulation",
+        "anchor_instance_id": null,
+        "geometry": {
+          "shape": "rectangle",
+          "center_m": { "x": 0.775, "y": 0.62 },
+          "size_m": { "width": 0.3, "depth": 1.94 },
+          "rotation_deg": 0
+        },
+        "source_id": "unit3_interior_model_pack_2026_07",
+        "confidence": "low",
+        "estimated": true,
+        "notes": "Modeled clear strip between the right bed and tucked chair/desk in the canonical staged pose; advisory only, not a verified passage width."
+      }
+    ]
   },
   "layout_constraints": [
     {
@@ -404,7 +818,7 @@
           "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
         }
       },
-      "position_hint": "Placement deliberately uncommitted: the official page confirms a dresser per resident but does not textually locate either dresser in the published double example.",
+      "position_hint": "The official page confirms a dresser per resident but does not locate either one. visualization_scene supplies symmetric low-confidence representative poses that must be labeled as unverified.",
       "source_id": "berkeley_housing_unit3",
       "confidence": "medium",
       "dimension_status": "estimated",
@@ -478,7 +892,7 @@
           "notes": "Pack modeling estimate (Twin XL / visual scale); not a verified Berkeley measurement."
         }
       },
-      "position_hint": "Placement deliberately uncommitted: the official furnishing list confirms the shared Microchill but the canonical double text does not locate it.",
+      "position_hint": "The official furnishing list confirms the shared Microchill but does not locate it. visualization_scene supplies a low-confidence representative entry-side pose that must be labeled as unverified.",
       "source_id": "berkeley_housing_unit3",
       "confidence": "medium",
       "dimension_status": "estimated",
@@ -582,7 +996,7 @@
     "Representative model only; exact room dimensions are not verified. The 4.115 × 3.505 × 2.44 m visualization shell is an estimate, while room_shell remains unknown.",
     "Canonical layout follows Berkeley's published Unit 3 double 3D example: centered door and window, entry-side closets/mirrors/lights, one bed and bookshelf per side wall, and tandem center desks accessed from opposite sides.",
     "The official 2020 Unit 3 double tour shows a different valid window-desk arrangement; it is documented as a variation and not blended into the canonical plan.",
-    "Furniture existence was rechecked against the official UC Berkeley Housing Unit 3 page on 2026-08-10. Dresser and Microchill placement remain uncommitted because the canonical description does not locate them clearly.",
+    "Furniture existence was rechecked against the official UC Berkeley Housing Unit 3 page on 2026-08-10. Dresser and Microchill poses are representative visualization assumptions because the canonical description does not locate them clearly.",
     "Bathrooms are community bathrooms located on each floor, not inside the room.",
     "Rooms vary in size, layout, and furniture configuration (official UC Berkeley Housing warning)."
   ],

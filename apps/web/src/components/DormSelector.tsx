@@ -1,425 +1,760 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { RoomViewer3D, FurnitureToggles, type ViewMode, type ZoomFn } from './RoomViewer3D';
-import { AccuracyPanel } from './AccuracyPanel';
-import { DimensionList } from './DimensionList';
-import { FloorPlan2D } from './FloorPlan2D';
 import {
-  roomManifest,
-  roomSummary,
-  uniqueHalls,
-  type RoomManifestItem
-} from '../data/assetManifest';
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+} from 'react';
+import { useSearchParams } from 'next/navigation';
+import { RoomViewer3D, type ViewMode, type ZoomFn } from './RoomViewer3D';
+import { AppHeader, ArrangeToolbar, MobileDock, SelectionBar, type ActiveSheet } from './PlannerChrome';
+import { DetailsPanel, LayersPanel, RoomBrowser } from './PlannerSheets';
+import { AddItemDialog, SharePanel } from './PlannerDialogs';
+import { PlannerFloorPlan } from './PlannerFloorPlan';
+import { ResponsiveSheet } from './ResponsiveSheet';
+import { humanizePlannerMessage, lowerText } from './presentation';
+import { roomManifest, type RoomManifestItem } from '../data/assetManifest';
 import {
-  DECOR_GROUP,
-  FURNITURE_GROUP_PREFIXES,
-  type FurnitureGroup
-} from '../data/furnitureGroups';
+  CUSTOM_BLOCK_LIMIT,
+  createPlannerState,
+  createSceneDocumentFromRoom,
+  isLayoutAction,
+  isPlannerLayoutDirty,
+  nextCustomBlockId,
+  plannerReducer,
+  type CanonicalPlannerRoom,
+  type CustomBlock,
+  type PlannerAction,
+  type PlannerPose,
+  type PlannerState,
+  type SceneDocument
+} from '../data/plannerDocument';
+import { savePlannerDocument } from '../data/plannerPersistence';
+import {
+  decodePlannerShareFragment,
+  encodePlannerShareFragment,
+  resolveInitialPlannerDocument,
+  withoutPlannerShareFragment
+} from '../data/plannerShare';
+import {
+  evaluatePlannerConflicts,
+  loadSceneColliderManifest,
+  plannerClearanceZonesFromRoom,
+  plannerShellFromRoom,
+  type SceneColliderManifest
+} from '../data/plannerCollisions';
+import { formatDimensionForUnit, type Dimension } from '../data/dimensions';
 import {
   arrangementReducer,
   initialArrangementState
 } from '../data/arrangementState';
+import {
+  DECOR_GROUP,
+  FURNITURE_GROUP_PREFIXES,
+  groupForNodeName,
+  type FurnitureGroup
+} from '../data/furnitureGroups';
 
-function firstRoomForHall(hall: string): RoomManifestItem {
-  return roomManifest.find((item) => item.hall === hall) ?? roomManifest[0];
+const TIP_KEY_PREFIX = 'nestometry:tip:v1:';
+
+function manifestRoom(roomId: string | null): RoomManifestItem {
+  return roomManifest.find((room) => room.id === roomId) ?? roomManifest[0];
+}
+
+function canonicalState(room: RoomManifestItem): PlannerState {
+  return createPlannerState(
+    createSceneDocumentFromRoom(room.room as CanonicalPlannerRoom)
+  );
+}
+
+function useFinePointerSupport() {
+  const [supported, setSupported] = useState(false);
+  useEffect(() => {
+    setSupported(
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+        'requestPointerLock' in document.documentElement
+    );
+  }, []);
+  return supported;
 }
 
 export function DormSelector() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const halls = useMemo(() => uniqueHalls(), []);
-
-  // --- Initialize state from the URL on mount ---
-  const initialRoom = useMemo(() => {
-    const roomId = searchParams.get('room');
-    return roomManifest.find((item) => item.id === roomId) ?? roomManifest[0];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const [hall, setHall] = useState<string>(() => {
-    const fromUrl = searchParams.get('hall');
-    if (fromUrl && halls.includes(fromUrl)) return fromUrl;
-    return initialRoom.hall;
-  });
-  const [roomId, setRoomId] = useState<string>(initialRoom.id);
-  // Walk is never restored from the URL: pointer lock needs a fresh user
-  // gesture, so deep links only ever open in 3d or 2d.
-  const [mode, setMode] = useState<ViewMode>(() => (searchParams.get('mode') === '2d' ? '2d' : '3d'));
-  const [dimsOn, setDimsOn] = useState<boolean>(() => searchParams.get('dims') === '1');
-
-  // First-person walk needs pointer lock and a real mouse, so the Walk toggle
-  // only appears on fine-pointer devices. Detected in an effect so the server
-  // and first client render agree (no button) and hydration stays clean.
-  // Arrange shares the fine-pointer gate: hover cues plus press-drag would
-  // fight one-finger orbiting on touch screens.
-  const [walkSupported, setWalkSupported] = useState(false);
-  const [arrangeSupported, setArrangeSupported] = useState(false);
-  useEffect(() => {
-    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    setWalkSupported('requestPointerLock' in document.documentElement && finePointer);
-    setArrangeSupported(finePointer);
-  }, []);
-
-  // Arrange (move-furniture) mode. Session-only by design: nothing here is
-  // written to the URL — a custom layout is a transient what-if, and switching
-  // rooms restores the official layout. layoutDirty mirrors "any furniture is
-  // displaced" (reported by the viewer) and drives the Reset pill + note.
+  const initialRoom = useMemo(() => manifestRoom(searchParams.get('room')), [searchParams]);
+  const [roomId, setRoomId] = useState(initialRoom.id);
+  const room = useMemo(() => manifestRoom(roomId), [roomId]);
+  const [planner, dispatchPlanner] = useReducer(plannerReducer, room, canonicalState);
+  const [arrangement, dispatchArrangement] = useReducer(arrangementReducer, initialArrangementState);
+  const [activeSheet, setActiveSheet] = useState<ActiveSheet>(null);
+  const expectedGroups = useMemo(() => {
+    const groups = new Set<FurnitureGroup>([DECOR_GROUP]);
+    for (const instance of room.room.visualization_scene.instances) {
+      const group = groupForNodeName(instance.id);
+      if (group) groups.add(group);
+    }
+    return FURNITURE_GROUP_PREFIXES.filter((group) => groups.has(group));
+  }, [room]);
+  const [discoveredGroups, setDiscoveredGroups] = useState<{
+    roomId: string;
+    groups: FurnitureGroup[];
+  } | null>(null);
+  const availableGroups = discoveredGroups?.roomId === room.id
+    ? discoveredGroups.groups
+    : expectedGroups;
   const [arrangeOn, setArrangeOn] = useState(false);
-  const [arrangementState, dispatchArrangement] = useReducer(
-    arrangementReducer,
-    initialArrangementState
-  );
-  const { layoutDirty } = arrangementState;
-  // Bridge from the Reset-layout pill to the in-Canvas restore action.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [addItemOpen, setAddItemOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [sharedSource, setSharedSource] = useState(false);
+  const sharedSourceRef = useRef(false);
+  const [readyRoomId, setReadyRoomId] = useState<string | null>(null);
+  const [cameraResetRevision, setCameraResetRevision] = useState(0);
+  const [posePreview, setPosePreview] = useState<{
+    kind: 'instance' | 'custom-block';
+    id: string;
+    pose: PlannerPose;
+  } | null>(null);
+  const [colliderManifest, setColliderManifest] = useState<SceneColliderManifest | null>(null);
+  const [colliderMessage, setColliderMessage] = useState<string | null>(null);
+  const [tip, setTip] = useState<'rooms' | 'arrange' | 'share' | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const zoomRef = useRef<ZoomFn | null>(null);
   const resetLayoutRef = useRef<(() => void) | null>(null);
+  const walkSupported = useFinePointerSupport();
 
-  // Groups present in the loaded GLB (discovered after load).
-  const [availableGroups, setAvailableGroups] = useState<FurnitureGroup[]>([]);
-  // Groups the user has hidden. Initialized from ?show= (which lists VISIBLE
-  // FURNITURE groups). The Decor master is tracked separately via ?decor=0 so it
-  // stays visible for legacy URLs written before decor existed: a `show` list
-  // that predates decor never names it, and deriving hidden from `show` would
-  // wrongly hide it. `decor` is therefore excluded from the show-derived set and
-  // is hidden only when an explicit `?decor=0` token is present.
-  const [hiddenGroups, setHiddenGroups] = useState<Set<FurnitureGroup>>(() => {
-    const show = searchParams.get('show');
-    const hidden = new Set<FurnitureGroup>();
-    if (show !== null) {
-      const visible = new Set(show.split(',').filter(Boolean));
-      for (const g of FURNITURE_GROUP_PREFIXES) {
-        if (g === DECOR_GROUP) continue; // decor is governed by ?decor=, not ?show=
-        if (!visible.has(g)) hidden.add(g);
+  const document = planner.document;
+  const documentLayoutDirty = useMemo(
+    () => isPlannerLayoutDirty(document),
+    [document]
+  );
+  const mode = document.view.mode as ViewMode;
+  const hiddenGroups = useMemo(() => {
+    const hidden = new Set(document.view.hidden_group_ids as FurnitureGroup[]);
+    if (!document.view.staging_visible) hidden.add(DECOR_GROUP);
+    return hidden;
+  }, [document.view.hidden_group_ids, document.view.staging_visible]);
+  const removedInstanceIds = useMemo(
+    () => new Set(document.layout.removed_instance_ids),
+    [document.layout.removed_instance_ids]
+  );
+
+  const closeSheet = useCallback(() => setActiveSheet(null), []);
+
+  const dismissTip = useCallback((name: 'rooms' | 'arrange' | 'share') => {
+    try {
+      localStorage.setItem(`${TIP_KEY_PREFIX}${name}`, '1');
+    } catch {
+      // The hints remain dismissible for this render when storage is blocked.
+    }
+    setTip((current) => (current === name ? null : current));
+  }, []);
+
+  const maybeShowTip = useCallback((name: 'rooms' | 'arrange' | 'share') => {
+    try {
+      if (localStorage.getItem(`${TIP_KEY_PREFIX}${name}`) !== '1') setTip(name);
+    } catch {
+      setTip(name);
+    }
+  }, []);
+
+  useEffect(() => {
+    let storage: Storage | undefined;
+    try {
+      storage = window.localStorage;
+    } catch {
+      // A strict browser privacy mode may deny access to the storage object.
+    }
+    if (!searchParams.has('room') && !window.location.hash) {
+      let lastRoom: string | null = null;
+      try {
+        lastRoom = storage?.getItem('nestometry:last-room') ?? null;
+      } catch {
+        // Continue with the URL/default room when reads are blocked.
+      }
+      if (lastRoom && lastRoom !== room.id && roomManifest.some((candidate) => candidate.id === lastRoom)) {
+        setRoomId(lastRoom);
+        return;
       }
     }
-    // Decor defaults on; only an explicit ?decor=0 hides it.
-    if (searchParams.get('decor') === '0') hidden.add(DECOR_GROUP);
-    return hidden;
-  });
-
-  // Local UI state (not persisted to URL): furniture popover + collapsible
-  // right panel on small screens.
-  const [furnitureOpen, setFurnitureOpen] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(true);
-  const stageRef = useRef<HTMLDivElement>(null);
-  // Bridge from the DOM zoom buttons to the active R3F camera.
-  const zoomRef = useRef<ZoomFn | null>(null);
-
-  const roomsForHall = useMemo(
-    () => roomManifest.filter((item) => item.hall === hall),
-    [hall]
-  );
-
-  const item = useMemo(
-    () => roomManifest.find((entry) => entry.id === roomId) ?? roomsForHall[0] ?? roomManifest[0],
-    [roomId, roomsForHall]
-  );
-
-  const summary = useMemo(() => roomSummary(item.room), [item.room]);
-
-  // --- URL sync: reflect current state into ?hall=&room=&mode=&show=&dims= ---
-  useEffect(() => {
-    const params = new URLSearchParams();
-    params.set('hall', hall);
-    params.set('room', roomId);
-    // Walk is a transient pose (see the mode initializer): reloading a
-    // mode=walk URL couldn't re-lock the pointer, so it round-trips as 3d.
-    params.set('mode', mode === 'walk' ? '3d' : mode);
-
-    // show = comma-separated VISIBLE FURNITURE groups; omit entirely when every
-    // furniture group is visible. Decor is excluded here (see below) so it never
-    // pollutes the legacy `show` contract.
-    const furniturePrefixes = FURNITURE_GROUP_PREFIXES.filter((g) => g !== DECOR_GROUP);
-    const visibleGroups = furniturePrefixes.filter((g) => !hiddenGroups.has(g));
-    const allFurnitureVisible = visibleGroups.length === furniturePrefixes.length;
-    if (!allFurnitureVisible) {
-      params.set('show', visibleGroups.join(','));
+    const shared = decodePlannerShareFragment(window.location.hash);
+    if (shared.status === 'ok' && shared.document.room_id !== room.id) {
+      const sharedRoom = roomManifest.find((candidate) => candidate.id === shared.document.room_id);
+      if (sharedRoom) {
+        setRoomId(sharedRoom.id);
+        return;
+      }
     }
-    // decor=0 only when the Decor master is off; omit when on (the default).
-    if (hiddenGroups.has(DECOR_GROUP)) {
-      params.set('decor', '0');
-    }
-    // dims=1 only when the overlay is on; omit when off.
-    if (dimsOn) {
-      params.set('dims', '1');
-    }
-
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [hall, roomId, mode, hiddenGroups, dimsOn, router]);
-
-  const handleHallChange = (nextHall: string) => {
-    setHall(nextHall);
-    // Keep current room if it still belongs to the hall; else pick the first.
-    const stillValid = roomManifest.some((r) => r.hall === nextHall && r.id === roomId);
-    if (!stillValid) {
-      dispatchArrangement({ type: 'room-switch' });
-      setRoomId(firstRoomForHall(nextHall).id);
-    }
-  };
-
-  const handleRoomChange = (nextRoomId: string) => {
-    if (nextRoomId === roomId) return;
+    const canonical = createSceneDocumentFromRoom(room.room as CanonicalPlannerRoom);
+    const resolved = resolveInitialPlannerDocument({
+      canonical,
+      fragment: window.location.hash,
+      search: window.location.search,
+      storage
+    });
+    dispatchPlanner({ type: 'load-document', document: resolved.document });
+    sharedSourceRef.current = resolved.source === 'shared';
+    setSharedSource(sharedSourceRef.current);
+    setReadyRoomId(room.id);
+    setShareMessage(
+      resolved.share_status
+        ? 'the shared plan was invalid or incompatible, so a saved or representative plan was opened.'
+        : null
+    );
+    setSelectedId(null);
+    setPosePreview(null);
+    setArrangeOn(false);
     dispatchArrangement({ type: 'room-switch' });
+    maybeShowTip('rooms');
+  }, [room, maybeShowTip, searchParams]);
+
+  useEffect(() => {
+    let active = true;
+    setColliderManifest(null);
+    setColliderMessage(null);
+    void loadSceneColliderManifest(room.colliderPath)
+      .then((manifest) => {
+        if (!active) return;
+        if (manifest.room_id !== room.id || manifest.scene_revision !== room.room.visualization_scene.revision) {
+          throw new Error('collision data does not match this room revision');
+        }
+        setColliderManifest(manifest);
+      })
+      .catch(() => {
+        if (!active) return;
+        setColliderMessage('collision guidance is unavailable for this room.');
+      });
+    return () => {
+      active = false;
+    };
+  }, [room]);
+
+  useEffect(() => {
+    if (readyRoomId !== document.room_id || sharedSourceRef.current) return;
+    try {
+      savePlannerDocument(window.localStorage, document);
+    } catch {
+      // Editing remains usable when the browser blocks persistent storage.
+    }
+  }, [document, readyRoomId]);
+
+  useEffect(() => {
+    if (
+      !arrangement.isDragging &&
+      arrangement.layoutDirty !== documentLayoutDirty
+    ) {
+      dispatchArrangement({ type: 'sync-layout', dirty: documentLayoutDirty });
+    }
+  }, [arrangement.isDragging, arrangement.layoutDirty, documentLayoutDirty]);
+
+  const forkSharedPlan = useCallback(() => {
+    if (!sharedSource) return;
+    window.history.replaceState(null, '', withoutPlannerShareFragment(window.location.href));
+    sharedSourceRef.current = false;
+    setSharedSource(false);
+    setShareMessage('shared plan copied to this device for editing.');
+  }, [sharedSource]);
+
+  const send = useCallback((action: PlannerAction, presentation = true) => {
+    if (action.type !== 'load-document') forkSharedPlan();
+    const nextPlanner =
+      presentation && isLayoutAction(action)
+        ? plannerReducer(planner, action)
+        : null;
+    dispatchPlanner(action);
+    if (nextPlanner && nextPlanner.document.layout !== planner.document.layout) {
+      dispatchArrangement(
+        action.type === 'reset-layout'
+          ? { type: 'reset' }
+          : {
+              type: 'layout-command',
+              dirty: isPlannerLayoutDirty(nextPlanner.document)
+            }
+      );
+    }
+  }, [forkSharedPlan, planner]);
+
+  const handleRoomChange = useCallback((nextRoomId: string) => {
+    if (nextRoomId === roomId) {
+      closeSheet();
+      return;
+    }
+    forkSharedPlan();
+    const url = new URL(window.location.href);
+    url.searchParams.set('room', nextRoomId);
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
     setRoomId(nextRoomId);
-  };
+    try {
+      localStorage.setItem('nestometry:last-room', nextRoomId);
+    } catch {
+      // Room selection still works when browser storage is unavailable.
+    }
+    closeSheet();
+  }, [closeSheet, forkSharedPlan, roomId]);
+
+  const handleModeChange = useCallback((nextMode: ViewMode) => {
+    send({ type: 'set-mode', mode: nextMode }, false);
+    if (nextMode === 'walk') setArrangeOn(false);
+  }, [send]);
 
   const handleGroupsDiscovered = useCallback((groups: FurnitureGroup[]) => {
-    // Preserve the schema prefix order for stable checkbox ordering.
-    const ordered = FURNITURE_GROUP_PREFIXES.filter((g) => groups.includes(g));
-    setAvailableGroups((prev) => {
-      if (prev.length === ordered.length && prev.every((g, i) => g === ordered[i])) {
-        return prev; // avoid needless re-render loops
-      }
-      return ordered;
-    });
-  }, []);
+    const ordered = FURNITURE_GROUP_PREFIXES.filter(
+      (group) => expectedGroups.includes(group) || groups.includes(group)
+    );
+    setDiscoveredGroups({ roomId: room.id, groups: ordered });
+  }, [expectedGroups, room.id]);
 
-  const handleToggle = (group: FurnitureGroup, visible: boolean) => {
-    setHiddenGroups((prev) => {
-      const next = new Set(prev);
-      if (visible) {
-        next.delete(group);
-      } else {
-        next.add(group);
-      }
+  const handleGroupToggle = useCallback((group: FurnitureGroup, visible: boolean) => {
+    if (group === DECOR_GROUP) {
+      send({ type: 'set-staging-visible', visible }, false);
+      return;
+    }
+    const next = new Set(document.view.hidden_group_ids);
+    if (visible) next.delete(group);
+    else next.add(group);
+    send({ type: 'set-hidden-groups', group_ids: [...next] }, false);
+  }, [document.view.hidden_group_ids, send]);
+
+  const handleToggleArrange = useCallback(() => {
+    if (mode === 'walk') handleModeChange('3d');
+    setArrangeOn((current) => {
+      const next = !current;
+      if (next) maybeShowTip('arrange');
       return next;
     });
-  };
-
-  const handleFullscreen = useCallback(() => {
-    const el = stageRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void el.requestFullscreen?.();
-    }
-  }, []);
-
-  const handleZoom = useCallback((direction: 1 | -1) => {
-    zoomRef.current?.(direction);
-  }, []);
-
-  // Leaving walk mode (ESC / lost pointer lock) always lands back on the orbit.
-  const handleWalkExit = useCallback(() => setMode('3d'), []);
-
-  // Close the furniture popover and switch Arrange off when leaving 3D: 2D has
-  // no furniture UI, walk locks the pointer, and Arrange is orbit-only. Any
-  // displaced layout (and its honesty note) persists until reset/room switch.
-  useEffect(() => {
-    if (mode !== '3d') {
-      setFurnitureOpen(false);
-      setArrangeOn(false);
-    }
-  }, [mode]);
+  }, [handleModeChange, maybeShowTip, mode]);
 
   const handleResetLayout = useCallback(() => {
     resetLayoutRef.current?.();
+    send({ type: 'reset-layout' }, false);
+    dispatchArrangement({ type: 'reset' });
+    setSelectedId(null);
+  }, [send]);
+
+  const handlePoseCommit = useCallback((instanceId: string, pose: PlannerPose) => {
+    send({ type: 'set-instance-pose', instance_id: instanceId, pose }, false);
+  }, [send]);
+
+  const handleCustomBlockPoseCommit = useCallback((blockId: string, pose: PlannerPose) => {
+    const block = document.layout.custom_blocks.find((candidate) => candidate.id === blockId);
+    if (block) send({ type: 'update-custom-block', block_id: blockId, block: { ...block, pose } }, false);
+  }, [document.layout.custom_blocks, send]);
+
+  const handlePosePreview = useCallback((
+    kind: 'instance' | 'custom-block',
+    id: string,
+    pose: PlannerPose
+  ) => {
+    setPosePreview({ kind, id, pose });
   }, []);
 
+  const clearPosePreview = useCallback(() => setPosePreview(null), []);
+
+  const handlePlanPosePreview = useCallback((
+    kind: 'instance' | 'custom-block',
+    id: string,
+    position: PlannerPose['position_m']
+  ) => {
+    const pose = kind === 'instance'
+      ? document.layout.instances.find((instance) => instance.id === id)?.pose
+      : document.layout.custom_blocks.find((block) => block.id === id)?.pose;
+    if (pose) setPosePreview({ kind, id, pose: { ...pose, position_m: position } });
+  }, [document.layout.custom_blocks, document.layout.instances]);
+
+  const selectedInstance = document.layout.instances.find((instance) => instance.id === selectedId);
+  const selectedBlock = document.layout.custom_blocks.find((block) => block.id === selectedId);
+  const previewDocument = useMemo(() => {
+    if (!posePreview) return document;
+    if (posePreview.kind === 'instance') {
+      return {
+        ...document,
+        layout: {
+          ...document.layout,
+          instances: document.layout.instances.map((instance) =>
+            instance.id === posePreview.id ? { ...instance, pose: posePreview.pose } : instance
+          )
+        }
+      };
+    }
+    return {
+      ...document,
+      layout: {
+        ...document.layout,
+        custom_blocks: document.layout.custom_blocks.map((block) =>
+          block.id === posePreview.id ? { ...block, pose: posePreview.pose } : block
+        )
+      }
+    };
+  }, [document, posePreview]);
+  const conflicts = useMemo(
+    () => colliderManifest &&
+      colliderManifest.room_id === previewDocument.room_id &&
+      colliderManifest.scene_revision === previewDocument.scene_revision
+      ? evaluatePlannerConflicts({
+          document: previewDocument,
+          shell: plannerShellFromRoom(room.room),
+          collider_manifest: colliderManifest,
+          clearance_zones: plannerClearanceZonesFromRoom(room.room)
+        })
+      : [],
+    [colliderManifest, previewDocument, room.room]
+  );
+  const changedIds = useMemo(() => {
+    const ids = new Set(document.layout.custom_blocks.map((block) => block.id));
+    for (const instance of document.layout.instances) {
+      const pose = instance.pose;
+      const original = instance.original_pose;
+      if (
+        pose.position_m.x !== original.position_m.x ||
+        pose.position_m.y !== original.position_m.y ||
+        pose.position_m.z !== original.position_m.z ||
+        pose.rotation_deg.z !== original.rotation_deg.z
+      ) {
+        ids.add(instance.id);
+      }
+    }
+    if (posePreview) ids.add(posePreview.id);
+    return ids;
+  }, [document.layout.custom_blocks, document.layout.instances, posePreview]);
+  const actionableConflicts = useMemo(
+    () => conflicts.filter((conflict) => conflict.instance_ids.some((id) => changedIds.has(id))),
+    [changedIds, conflicts]
+  );
+  const warnings = useMemo(
+    () => actionableConflicts.flatMap((conflict) =>
+      conflict.instance_ids.map((object_id) => ({
+        object_id,
+        kind: conflict.kind,
+        severity: conflict.severity
+      }))
+    ),
+    [actionableConflicts]
+  );
+  const conflictInstanceIds = useMemo(
+    () => new Set(
+      warnings
+        .filter((warning) => warning.severity === 'error')
+        .map((warning) => warning.object_id)
+    ),
+    [warnings]
+  );
+  const selectedWarnings = useMemo(
+    () => actionableConflicts
+      .filter((conflict) => selectedId && conflict.instance_ids.includes(selectedId))
+      .map((conflict) => humanizePlannerMessage(conflict.message)),
+    [actionableConflicts, selectedId]
+  );
+
+  const rotateSelected = useCallback(() => {
+    if (selectedInstance) {
+      send({ type: 'rotate-instance', instance_id: selectedInstance.id });
+    } else if (selectedBlock) {
+      send({
+        type: 'update-custom-block',
+        block_id: selectedBlock.id,
+        block: {
+          ...selectedBlock,
+          pose: {
+            ...selectedBlock.pose,
+            rotation_deg: {
+              ...selectedBlock.pose.rotation_deg,
+              z: (selectedBlock.pose.rotation_deg.z + 90) % 360
+            }
+          }
+        }
+      });
+    }
+  }, [selectedBlock, selectedInstance, send]);
+
+  const removeSelected = useCallback(() => {
+    if (selectedInstance?.removable) {
+      send({ type: 'remove-instance', instance_id: selectedInstance.id });
+      setSelectedId(null);
+    } else if (selectedBlock) {
+      send({ type: 'remove-custom-block', block_id: selectedBlock.id });
+      setSelectedId(null);
+    }
+  }, [selectedBlock, selectedInstance, send]);
+
+  const createShare = useCallback(async () => {
+    try {
+      const shareDocument = document.view.mode === 'walk'
+        ? { ...document, view: { ...document.view, mode: '3d' as const } }
+        : document;
+      const fragment = encodePlannerShareFragment(shareDocument);
+      const url = `${window.location.origin}${window.location.pathname}${fragment}`;
+      setShareUrl(url);
+      await navigator.clipboard.writeText(url);
+      setShareMessage('share link copied.');
+    } catch (error) {
+      setShareMessage(error instanceof Error ? lowerText(error.message) : 'the share link could not be created.');
+    }
+  }, [document]);
+
+  const openSheet = useCallback((sheet: Exclude<ActiveSheet, null>) => {
+    setActiveSheet(sheet);
+    if (sheet === 'share') maybeShowTip('share');
+  }, [maybeShowTip]);
+
+  const handleFullscreen = useCallback(() => {
+    if (window.document.fullscreenElement) void window.document.exitFullscreen();
+    else void stageRef.current?.requestFullscreen?.();
+  }, []);
+
+  const handleResetCamera = useCallback(() => {
+    const canonical = room.room.visualization_scene.cameras.orbit;
+    send({
+      type: 'set-orbit-camera',
+      camera: {
+        position_m: { ...canonical.position_m },
+        target_m: { ...canonical.target_m },
+        fov_deg: canonical.fov_deg
+      }
+    }, false);
+    setCameraResetRevision((revision) => revision + 1);
+  }, [room.room.visualization_scene.cameras.orbit, send]);
+
+  const handleTopCamera = useCallback(() => {
+    if (mode !== '3d') handleModeChange('3d');
+    const cameras = room.room.visualization_scene.cameras;
+    send({
+      type: 'set-orbit-camera',
+      camera: {
+        position_m: { ...cameras.plan.position_m },
+        target_m: { ...cameras.plan.target_m },
+        fov_deg: cameras.orbit.fov_deg
+      }
+    }, false);
+    setCameraResetRevision((revision) => revision + 1);
+  }, [handleModeChange, mode, room.room.visualization_scene.cameras, send]);
+
+  const handleCameraCommit = useCallback((camera: SceneDocument['view']['orbit_camera']) => {
+    send({ type: 'set-orbit-camera', camera }, false);
+  }, [send]);
+
+  const roomName = lowerText(room.displayName.replace(/\s+—\s+Representative$/i, ''));
+  const compactRoomName = lowerText(
+    `${room.hall} ${room.roomType.replace(/^standard_/u, '').replaceAll('_', ' ')}`
+  );
+  const canRotateSelection = Boolean(
+    selectedBlock || selectedInstance?.role === 'movable'
+  );
+  const selectedDimensions = useMemo(() => {
+    if (selectedBlock) {
+      const dimensions = selectedBlock.dimensions_m;
+      const asDimension = (value_m: number): Dimension => ({
+        value_m,
+        status: 'verified',
+        estimated: false,
+        source_id: null,
+        confidence: 'high'
+      });
+      return [dimensions.width, dimensions.depth, dimensions.height]
+        .map((value) => formatDimensionForUnit(asDimension(value), document.view.units).text)
+        .join(' × ');
+    }
+    if (!selectedInstance) return null;
+    const object = room.room.objects.find((candidate) => candidate.id === selectedInstance.object_id);
+    if (!object?.dimensions_m) return 'dimensions unknown';
+    return [object.dimensions_m.x, object.dimensions_m.y, object.dimensions_m.z]
+      .map((dimension) => formatDimensionForUnit(dimension, document.view.units).text)
+      .join(' × ');
+  }, [document.view.units, room.room.objects, selectedBlock, selectedInstance]);
+
   return (
-    <main className="app-stage">
-      {/* Full-bleed stage: the SAME R3F canvas, perspective (3D) or top-down
-          orthographic (2D). Floating UI sits over it. */}
-      <div className="stage" ref={stageRef}>
-        <RoomViewer3D
-          room={item}
-          mode={mode}
-          dimsOn={dimsOn}
-          arrangeOn={arrangeOn}
-          arrangementState={arrangementState}
-          hiddenGroups={hiddenGroups}
-          onGroupsDiscovered={handleGroupsDiscovered}
-          onWalkExit={handleWalkExit}
-          onArrangementAction={dispatchArrangement}
-          resetLayoutRef={resetLayoutRef}
-          zoomRef={zoomRef}
-        />
-
-        {/* Round zoom +/- buttons floating on the stage's right edge. Hidden
-            while walking: the pointer is locked and WASD replaces zooming. */}
-        {mode !== 'walk' ? (
+    <main className="app-stage" ref={stageRef}>
+      <div className="stage" id="main-stage">
+        {mode === '2d' ? (
+          <PlannerFloorPlan
+            room={room}
+            document={document}
+            arrangeOn={arrangeOn}
+            selectedId={selectedId}
+            warnings={arrangeOn ? warnings : []}
+            colliderManifest={colliderManifest}
+            hiddenGroups={hiddenGroups}
+            dimensionsVisible={document.view.dimensions_visible}
+            onSelect={setSelectedId}
+            onPosePreview={handlePlanPosePreview}
+            onPosePreviewEnd={clearPosePreview}
+            dispatch={send}
+          />
+        ) : (
+          <RoomViewer3D
+            key={room.id}
+            room={room}
+            mode={mode}
+            dimsOn={document.view.dimensions_visible}
+            arrangeOn={arrangeOn}
+            arrangementState={arrangement}
+            hiddenGroups={hiddenGroups}
+            onGroupsDiscovered={handleGroupsDiscovered}
+            onWalkExit={() => handleModeChange('3d')}
+            onArrangementAction={dispatchArrangement}
+            resetLayoutRef={resetLayoutRef}
+            zoomRef={zoomRef}
+            removedInstanceIds={removedInstanceIds}
+            cameraResetRevision={cameraResetRevision}
+            renderProfile={document.view.render_profile}
+            plannerDocument={document}
+            selectedInstanceId={selectedId}
+            snapEnabled={document.view.snap_enabled}
+            onInstanceSelected={setSelectedId}
+            onInstancePoseCommit={handlePoseCommit}
+            onCustomBlockPoseCommit={handleCustomBlockPoseCommit}
+            onPosePreview={handlePosePreview}
+            onPosePreviewEnd={clearPosePreview}
+            showConfidence={document.view.confidence_visible}
+            conflictInstanceIds={conflictInstanceIds}
+            onCameraCommit={handleCameraCommit}
+          />
+        )}
+        {mode !== 'walk' && mode !== '2d' ? (
           <div className="zoom-controls">
-            <button type="button" className="zoom-btn" onClick={() => handleZoom(1)} aria-label="Zoom in">
-              +
-            </button>
-            <button type="button" className="zoom-btn" onClick={() => handleZoom(-1)} aria-label="Zoom out">
-              −
-            </button>
+            <button type="button" className="zoom-btn" aria-label="zoom in" onClick={() => zoomRef.current?.(1)}>+</button>
+            <button type="button" className="zoom-btn" aria-label="zoom out" onClick={() => zoomRef.current?.(-1)}>−</button>
           </div>
         ) : null}
       </div>
 
-      {/* White full-width top bar over the stage. */}
-      <div className="topbar">
-        <div className="topbar-title">{item.displayName}</div>
-        <div className="topbar-actions">
-          <button
-            type="button"
-            className={`topbar-pill${dimsOn ? ' active' : ''}`}
-            aria-pressed={dimsOn}
-            onClick={() => setDimsOn((on) => !on)}
-          >
-            Dimensions
-          </button>
+      <AppHeader
+        roomName={roomName}
+        compactRoomName={compactRoomName}
+        mode={mode}
+        dimsOn={document.view.dimensions_visible}
+        arrangeOn={arrangeOn}
+        walkSupported={walkSupported}
+        onOpenSheet={openSheet}
+        onModeChange={handleModeChange}
+        onToggleDimensions={() => send({ type: 'set-dimensions-visible', visible: !document.view.dimensions_visible }, false)}
+        onToggleArrange={handleToggleArrange}
+        onTopCamera={handleTopCamera}
+        onResetCamera={handleResetCamera}
+        onFullscreen={handleFullscreen}
+      />
+      <MobileDock mode={mode} arrangeOn={arrangeOn} onOpenSheet={openSheet} onModeChange={handleModeChange} onToggleArrange={handleToggleArrange} />
 
-          <div className="topbar-furniture">
-            <button
-              type="button"
-              className={`topbar-pill${furnitureOpen ? ' active' : ''}`}
-              aria-expanded={furnitureOpen}
-              onClick={() => setFurnitureOpen((open) => !open)}
-            >
-              Furniture
-            </button>
-            {furnitureOpen ? (
-              <div className="furniture-popover" role="dialog" aria-label="Furniture visibility">
-                <FurnitureToggles
-                  availableGroups={availableGroups}
-                  hiddenGroups={hiddenGroups}
-                  onToggle={handleToggle}
-                />
+      {mode === '2d' ? (
+        <div className="stage-status-stack">
+          {arrangement.layoutDirty ? (
+            <div className="stage-arrange-note" role="status">
+              custom arrangement · not the representative layout
+            </div>
+          ) : null}
+          <div className="stage-accuracy-chip">
+            representative plan · dimensions estimated · actual rooms vary
+          </div>
+        </div>
+      ) : null}
+
+      {arrangeOn ? (
+        <ArrangeToolbar
+          canUndo={planner.past.length > 0}
+          canRedo={planner.future.length > 0}
+          snapOn={document.view.snap_enabled}
+          canRotate={canRotateSelection}
+          canAddItem={document.layout.custom_blocks.length < CUSTOM_BLOCK_LIMIT}
+          warningCount={actionableConflicts.length}
+          onUndo={() => send({ type: 'undo' })}
+          onRedo={() => send({ type: 'redo' })}
+          onRotate={rotateSelected}
+          onToggleSnap={() => send({ type: 'set-snap-enabled', enabled: !document.view.snap_enabled }, false)}
+          onAddItem={() => setAddItemOpen(true)}
+          onOpenInventory={() => openSheet('inventory')}
+          onReset={handleResetLayout}
+        />
+      ) : null}
+
+      {arrangeOn && (selectedInstance || selectedBlock) ? (
+        <SelectionBar
+          name={lowerText(selectedInstance?.label ?? selectedBlock?.label ?? '')}
+          dimensions={selectedDimensions ?? 'dimensions unknown'}
+          confidence={selectedInstance?.confidence ?? 'low'}
+          warning={selectedWarnings[0]}
+          canRotate={canRotateSelection}
+          canRemove={Boolean(selectedInstance?.removable || selectedBlock)}
+          onRotate={rotateSelected}
+          onRemove={removeSelected}
+          onClose={() => setSelectedId(null)}
+        />
+      ) : null}
+
+      <ResponsiveSheet open={activeSheet === 'rooms'} title="rooms" side="left" onClose={closeSheet}>
+        <RoomBrowser selected={room} onSelect={handleRoomChange} />
+      </ResponsiveSheet>
+      <ResponsiveSheet open={activeSheet === 'details'} title="details" side="right" onClose={closeSheet}>
+        <DetailsPanel room={room} units={document.view.units} onUnitsChange={(units) => send({ type: 'set-units', units }, false)} />
+      </ResponsiveSheet>
+      <ResponsiveSheet open={activeSheet === 'layers'} title="layers" side="right" onClose={closeSheet}>
+        <LayersPanel
+          availableGroups={availableGroups}
+          hiddenGroups={hiddenGroups}
+          onToggle={handleGroupToggle}
+          quality={document.view.render_profile}
+          onQualityChange={(profile) => send({ type: 'set-render-profile', profile }, false)}
+          wallFadeOn={document.view.wall_fade_enabled}
+          onWallFadeChange={(enabled) => send({ type: 'set-wall-fade-enabled', enabled }, false)}
+          confidenceOn={document.view.confidence_visible}
+          onConfidenceChange={(visible) => send({ type: 'set-confidence-visible', visible }, false)}
+        />
+      </ResponsiveSheet>
+      <ResponsiveSheet open={activeSheet === 'share'} title="share this plan" side="right" onClose={closeSheet}>
+        <SharePanel shareUrl={shareUrl} message={shareMessage} onCopy={createShare} />
+      </ResponsiveSheet>
+      <ResponsiveSheet open={activeSheet === 'inventory'} title="removed from plan" side="right" onClose={closeSheet}>
+        <div className="inventory-list">
+          {document.layout.removed_instance_ids.length === 0 ? <p className="empty-state">no supplied furniture has been removed.</p> : null}
+          {document.layout.removed_instance_ids.map((id) => {
+            const instance = document.layout.instances.find((candidate) => candidate.id === id);
+            return instance ? (
+              <div className="inventory-item" key={id}>
+                <span>{lowerText(instance.label)}</span>
+                <button type="button" className="secondary-button" onClick={() => send({ type: 'restore-instance', instance_id: id })}>restore</button>
               </div>
-            ) : null}
-          </div>
-
-          {/* Arrange is 3D-orbit-only (hidden in 2D/walk) and fine-pointer-only,
-              like Walk. The Reset pill appears once something actually moved. */}
-          {arrangeSupported && mode === '3d' ? (
-            <button
-              type="button"
-              className={`topbar-pill${arrangeOn ? ' active' : ''}`}
-              aria-pressed={arrangeOn}
-              onClick={() => setArrangeOn((on) => !on)}
-            >
-              Arrange
-            </button>
-          ) : null}
-          {arrangeSupported && mode === '3d' && arrangeOn && layoutDirty ? (
-            <button type="button" className="topbar-pill" onClick={handleResetLayout}>
-              Reset layout
-            </button>
-          ) : null}
-
-          <button
-            type="button"
-            className="topbar-pill topbar-icon"
-            onClick={handleFullscreen}
-            aria-label="Toggle fullscreen"
-            title="Toggle fullscreen"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-
-          {/* Stacked 3D / 2D segmented toggle at the far corner. When Walk is
-              available (fine-pointer devices) the group gains a third segment
-              and lays out as a row so it still fits the bar; touch devices keep
-              the original stacked pair untouched. */}
-          <div className={`topbar-segmented${walkSupported ? ' has-walk' : ''}`}>
-            <button
-              type="button"
-              className={mode === '3d' ? 'active' : ''}
-              aria-pressed={mode === '3d'}
-              onClick={() => setMode('3d')}
-            >
-              3D
-            </button>
-            <button
-              type="button"
-              className={mode === '2d' ? 'active' : ''}
-              aria-pressed={mode === '2d'}
-              onClick={() => setMode('2d')}
-            >
-              2D
-            </button>
-            {walkSupported ? (
-              <button
-                type="button"
-                className={mode === 'walk' ? 'active' : ''}
-                aria-pressed={mode === 'walk'}
-                onClick={() => setMode((current) => (current === 'walk' ? '3d' : 'walk'))}
-              >
-                Walk
-              </button>
-            ) : null}
-          </div>
+            ) : null;
+          })}
         </div>
-      </div>
-
-      {/* Floating top-left: project eyebrow + compact selectors + room info chip.
-          Sits below the top bar (see .selector-card top offset). */}
-      <div className="float-card selector-card">
-        <p className="eyebrow">Nestometry · Source-backed dorm rooms in 2D and 3D</p>
-
-        <label className="field-label" htmlFor="hall-select">
-          Hall
-        </label>
-        <select
-          id="hall-select"
-          value={hall}
-          onChange={(event) => handleHallChange(event.target.value)}
-        >
-          {halls.map((h) => (
-            <option key={h} value={h}>
-              {h}
-            </option>
-          ))}
-        </select>
-
-        <label className="field-label" htmlFor="room-select">
-          Room
-        </label>
-        <select
-          id="room-select"
-          value={item.id}
-          onChange={(event) => handleRoomChange(event.target.value)}
-        >
-          {roomsForHall.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.displayName}
-            </option>
-          ))}
-        </select>
-
-        <div className="room-info-chip" title="Honest occupancy summary">
-          {summary}
+      </ResponsiveSheet>
+      <ResponsiveSheet open={activeSheet === 'more'} title="more planner tools" side="right" onClose={closeSheet}>
+        <div className="more-tools" role="group" aria-label="more planner tools">
+          <button type="button" className="secondary-button" onClick={() => openSheet('layers')}>layers and quality</button>
+          <button type="button" className="secondary-button" onClick={() => openSheet('share')}>share this plan</button>
+          <button type="button" className="secondary-button" aria-pressed={document.view.dimensions_visible} onClick={() => send({ type: 'set-dimensions-visible', visible: !document.view.dimensions_visible }, false)}>dimensions</button>
+          <button type="button" className="secondary-button" onClick={() => { handleTopCamera(); closeSheet(); }}>top view</button>
+          <button type="button" className="secondary-button" onClick={() => { handleResetCamera(); closeSheet(); }}>reset camera</button>
+          <button type="button" className="secondary-button" onClick={() => { handleFullscreen(); closeSheet(); }}>toggle fullscreen</button>
         </div>
-        <p className="independence-note">
-          Independent student project; not affiliated with or endorsed by UC Berkeley or
-          the Regents of the University of California.
-        </p>
-      </div>
+      </ResponsiveSheet>
 
-      {/* Floating right: accuracy + dimensions + schematic. Collapsible on mobile. */}
-      <aside className={`float-card info-panel${panelOpen ? '' : ' is-collapsed'}`}>
-        <button
-          type="button"
-          className="info-panel-header"
-          aria-expanded={panelOpen}
-          onClick={() => setPanelOpen((open) => !open)}
-        >
-          <span>Accuracy &amp; details</span>
-          <span className="info-panel-caret" aria-hidden="true">
-            {panelOpen ? '▾' : '▸'}
-          </span>
-        </button>
-        {panelOpen ? (
-          <div className="info-panel-body">
-            <AccuracyPanel room={item} />
-            <DimensionList room={item} />
-            <FloorPlan2D room={item} />
-          </div>
-        ) : null}
-      </aside>
+      {addItemOpen && document.layout.custom_blocks.length < CUSTOM_BLOCK_LIMIT ? (
+        <AddItemDialog
+          document={document}
+          nextId={nextCustomBlockId(document)}
+          onAdd={(block: CustomBlock) => {
+            send({ type: 'add-custom-block', block });
+            setSelectedId(block.id);
+            setAddItemOpen(false);
+          }}
+          onClose={() => setAddItemOpen(false)}
+        />
+      ) : null}
+
+      {tip ? (
+        <div className="onboarding-tip" style={tip === 'rooms' ? { top: 64, left: 88 } : tip === 'arrange' ? { bottom: 76, left: '50%', transform: 'translateX(-50%)' } : { top: 64, right: 14 }}>
+          {tip === 'rooms' ? 'open rooms to search the growing catalog.' : tip === 'arrange' ? 'select furniture, then move it in 2d or 3d. warnings are guidance, not blockers.' : 'share creates an editable copy without uploading your plan.'}
+          <button type="button" className="icon-button" aria-label={`dismiss ${tip} tip`} onClick={() => dismissTip(tip)}>×</button>
+        </div>
+      ) : null}
+      {arrangeOn && actionableConflicts.length > 0 ? (
+        <div className="planner-warning-summary" role="status">
+          <strong>{actionableConflicts.length} {actionableConflicts.length === 1 ? 'warning' : 'warnings'}</strong>
+          <span>{selectedWarnings[0] ?? humanizePlannerMessage(actionableConflicts[0].message)} · movement is still allowed</span>
+        </div>
+      ) : null}
+      {colliderMessage ? <div className="planner-notice" role="status">{colliderMessage}</div> : null}
     </main>
   );
 }

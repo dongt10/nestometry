@@ -3,6 +3,7 @@
  */
 export type Dimension = {
   value_m: number | null;
+  uncertainty_m?: number;
   status: 'verified' | 'estimated' | 'unknown' | 'not_applicable';
   estimated: boolean;
   source_id: string | null;
@@ -20,6 +21,8 @@ export type FormattedDimension = {
   approximate: boolean;
 };
 
+export type UnitSystem = 'imperial' | 'metric';
+
 /**
  * Apply the non-negotiable display rules for a schema dimension:
  * - null value or status 'unknown' -> em dash + "unknown" badge (NEVER a number)
@@ -31,10 +34,42 @@ export function formatDimension(dim: Dimension | undefined | null): FormattedDim
     return { text: '—', badge: 'unknown', approximate: true };
   }
   if (dim.status === 'estimated' || dim.estimated) {
-    return { text: `~${dim.value_m} m`, badge: 'estimated', approximate: true };
+    const uncertainty = dim.uncertainty_m
+      ? ` ± ${Number(dim.uncertainty_m.toFixed(4))} m`
+      : '';
+    return { text: `~${dim.value_m} m${uncertainty}`, badge: 'estimated', approximate: true };
   }
   // verified
   return { text: `${dim.value_m} m`, badge: 'verified', approximate: false };
+}
+
+function metersToFeetAndInches(valueM: number): string {
+  const totalInches = Math.round(valueM * 39.3700787402);
+  const feet = Math.floor(totalInches / 12);
+  const inches = totalInches % 12;
+  return inches === 0 ? `${feet} ft` : `${feet} ft ${inches} in`;
+}
+
+/** Format a dimension in the planner's selected display units. */
+export function formatDimensionForUnit(
+  dim: Dimension | undefined | null,
+  units: UnitSystem
+): FormattedDimension {
+  const base = formatDimension(dim);
+  if (!dim || dim.value_m === null || base.badge === 'unknown') return base;
+  const value =
+    units === 'imperial'
+      ? metersToFeetAndInches(dim.value_m)
+      : `${Number(dim.value_m.toFixed(3))} m`;
+  const uncertainty = dim.uncertainty_m
+    ? ` ± ${units === 'imperial'
+      ? metersToFeetAndInches(dim.uncertainty_m)
+      : `${Number(dim.uncertainty_m.toFixed(3))} m`}`
+    : '';
+  return {
+    ...base,
+    text: `${base.approximate ? '~' : ''}${value}${uncertainty}`
+  };
 }
 
 /**

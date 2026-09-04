@@ -231,3 +231,14 @@ The shell still appeared tight at 4.45 × 3.85 when real-size furniture was comp
 - The double `visualization_shell` returns to the pack's center estimate, **4.115 × 3.505 × 2.44 m**, with medium confidence and explicit non-measurement wording. The later 4.60 × 3.95 × 2.60 far-edge estimate remains the triple's visualization shell only. The double's exact `room_shell` remains `null`/`unknown`.
 - Dresser existence/count and the shared Microchill remain in the data, but their placement is uncommitted and omitted from the canonical 2D plan. Bookshelf/mirror/light footprints are likewise omitted until dimensions and precise positions are supportable.
 - The official gallery image captioned "A Triple Room in Units 1-3" is explicitly excluded from double layout, furniture-profile, and material claims. Double physical-detail cues come from the direct double render and the official high-rise double analog.
+
+## Schema 0.3 canonical-scene reconciliation — 2026-08-12
+
+- Both representative records now use the same evidence-centered visualization envelope: **4.115 × 3.505 × 2.44 m** (13 ft 6 in × 11 ft 6 in × 8 ft), medium confidence, with **±0.3048 m (12 in)** uncertainty on every axis. This is a modeling estimate only. Both records' public `room_shell` values remain `null` / `unknown`.
+- `visualization_scene` is the canonical placement source. Its origin is the center of the finished floor; +X points right when facing the window, +Y points toward the window, and +Z points up. Stable instance IDs map grouped room objects to independent furniture, openings, and built-ins.
+- The direct Berkeley double and triple top views define the canonical representative variants. Official tours and hall-specific student examples remain documented variations and are not blended into these scenes.
+- Double dresser and Microchill poses are explicitly low-confidence representative placements. Their presence is official; their published-render locations are not verified.
+- The triple's first dresser follows the official bunk-foot relationship. The second is kept near the loft foot/entry at medium confidence and shifted inward within the estimated envelope to avoid the provisional door-swing sector. The Microchill placement remains a low-confidence representative assumption.
+- The triple desk footprint is capped to **1.0415 × 0.61 m** so two equal modules plus a 5 mm seam fit within the estimated 2.083 m loft span. This is a visualization fit decision, not a Berkeley-published desk dimension.
+- Door-swing and 0.61 m circulation geometries are estimated advisory zones, not code-compliance claims or verified accessible routes.
+- Historical 4.45 × 3.85, 4.60 × 3.95 × 2.60, and triple-only enlarged-envelope notes above are retained as research history but are superseded by this reconciliation for current generated assets.

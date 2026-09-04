@@ -1,5 +1,11 @@
 import type { RoomManifestItem, RoomObject } from '../data/assetManifest';
-import { formatDimension, type Dimension, type FormattedDimension } from '../data/dimensions';
+import {
+  formatDimensionForUnit,
+  type Dimension,
+  type FormattedDimension,
+  type UnitSystem
+} from '../data/dimensions';
+import { lowerText } from './presentation';
 
 function DimCell({ formatted }: { formatted: FormattedDimension }) {
   return (
@@ -15,66 +21,87 @@ function DimRow({
   count,
   x,
   y,
-  z
+  z,
+  units
 }: {
   label: string;
   count?: number;
   x?: Dimension;
   y?: Dimension;
   z?: Dimension;
+  units: UnitSystem;
 }) {
   return (
     <tr>
       <th scope="row">
-        {label}
+        {lowerText(label)}
         {count && count > 1 ? <span className="dim-count"> ×{count}</span> : null}
       </th>
       <td>
-        <DimCell formatted={formatDimension(x)} />
+        <DimCell formatted={formatDimensionForUnit(x, units)} />
       </td>
       <td>
-        <DimCell formatted={formatDimension(y)} />
+        <DimCell formatted={formatDimensionForUnit(y, units)} />
       </td>
       <td>
-        <DimCell formatted={formatDimension(z)} />
+        <DimCell formatted={formatDimensionForUnit(z, units)} />
       </td>
     </tr>
   );
 }
 
-export function DimensionList({ room: item }: { room: RoomManifestItem }) {
+export function DimensionList({ room: item, units }: { room: RoomManifestItem; units: UnitSystem }) {
   const { room } = item;
   return (
     <section className="dimension-panel">
-      <h2>Dimensions</h2>
       <p className="dimension-disclaimer">
-        Values are unverified unless labeled <strong>verified</strong>. Estimated and unknown values must not be
-        treated as exact.
+        official dimensions are unknown. model estimates are planning guidance, not exact measurements.
       </p>
 
-      <h3>Room shell</h3>
+      <h3>official room dimensions</h3>
       <table className="dim-table">
         <thead>
           <tr>
-            <th scope="col">Item</th>
-            <th scope="col">Width</th>
-            <th scope="col">Depth</th>
-            <th scope="col">Height</th>
+            <th scope="col">item</th>
+            <th scope="col">width</th>
+            <th scope="col">depth</th>
+            <th scope="col">height</th>
           </tr>
         </thead>
         <tbody>
-          <DimRow label="Room" x={room.room_shell.width} y={room.room_shell.depth} z={room.room_shell.height} />
+          <DimRow label="room" units={units} x={room.room_shell.width} y={room.room_shell.depth} z={room.room_shell.height} />
         </tbody>
       </table>
 
-      <h3>Objects</h3>
+      <h3>visualization estimate</h3>
       <table className="dim-table">
         <thead>
           <tr>
-            <th scope="col">Item</th>
-            <th scope="col">X</th>
-            <th scope="col">Y</th>
-            <th scope="col">Z</th>
+            <th scope="col">item</th>
+            <th scope="col">width</th>
+            <th scope="col">depth</th>
+            <th scope="col">height</th>
+          </tr>
+        </thead>
+        <tbody>
+          <DimRow
+            label="model shell"
+            units={units}
+            x={room.visualization_shell.width}
+            y={room.visualization_shell.depth}
+            z={room.visualization_shell.height}
+          />
+        </tbody>
+      </table>
+
+      <h3>furniture</h3>
+      <table className="dim-table">
+        <thead>
+          <tr>
+            <th scope="col">item</th>
+            <th scope="col">x</th>
+            <th scope="col">y</th>
+            <th scope="col">z</th>
           </tr>
         </thead>
         <tbody>
@@ -83,6 +110,7 @@ export function DimensionList({ room: item }: { room: RoomManifestItem }) {
               key={obj.id}
               label={obj.label}
               count={obj.count}
+              units={units}
               x={obj.dimensions_m?.x}
               y={obj.dimensions_m?.y}
               z={obj.dimensions_m?.z}
