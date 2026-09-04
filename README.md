@@ -59,6 +59,8 @@ corepack pnpm verify
 
 That runs production and full dependency audits, ESLint, Next.js type generation and TypeScript, Vitest, both room-schema validations, public-tree and artifact-integrity checks, a production build, and Playwright Chromium smoke tests.
 
+CI runs the same deterministic checks after a separate dependency-audit step. The audit step uses pnpm's `--ignore-registry-errors` option so an unavailable npm advisory endpoint cannot prevent lint, tests, schema validation, the build, and browser QA from running. Returned high- or critical-severity advisories still fail the step; GitHub Dependabot and CodeQL provide additional repository monitoring.
+
 Individual commands are also available:
 
 ```bash

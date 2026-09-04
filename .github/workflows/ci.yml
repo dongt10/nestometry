@@ -41,5 +41,13 @@ jobs:
       - name: Install managed Chromium
         run: corepack pnpm --filter @nestometry/web exec playwright install --with-deps chromium
 
-      - name: Run the full verification suite
-        run: corepack pnpm verify
+      - name: Audit dependencies
+        env:
+          npm_config_fetch_retries: '1'
+          npm_config_fetch_timeout: '30000'
+        run: |
+          corepack pnpm audit --prod --audit-level high --ignore-registry-errors
+          corepack pnpm audit --audit-level high --ignore-registry-errors
+
+      - name: Run deterministic verification checks
+        run: corepack pnpm verify:checks
