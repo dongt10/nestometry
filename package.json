@@ -21,8 +21,8 @@
     "demo:unit3": "bash scripts/build-unit3-demo.sh"
   },
   "devDependencies": {
-    "@gltf-transform/cli": "4.4.2",
-    "tsx": "4.23.12",
+    "@gltf-transform/cli": "4.5.0",
+    "tsx": "4.23.13",
     "typescript": "6.0.3",
     "zod": "4.4.3"
   },
